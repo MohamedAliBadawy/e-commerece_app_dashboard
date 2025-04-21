@@ -41,22 +41,22 @@ class _AdminPageState extends State<AdminPage> {
             child: ListView(
               children: [
                 SidebarItem(
-                  title: 'Product Management',
+                  title: 'User Management',
                   isSelected: _selectedIndex == 0,
                   onTap: () => setState(() => _selectedIndex = 0),
                 ),
                 SidebarItem(
-                  title: 'Product Management',
+                  title: 'Delivery Manager Management',
                   isSelected: _selectedIndex == 1,
                   onTap: () => setState(() => _selectedIndex = 1),
                 ),
                 SidebarItem(
-                  title: 'Product Management',
+                  title: 'Order Management',
                   isSelected: _selectedIndex == 2,
                   onTap: () => setState(() => _selectedIndex = 2),
                 ),
                 SidebarItem(
-                  title: 'Product Management',
+                  title: 'Post Management',
                   isSelected: _selectedIndex == 3,
                   onTap: () => setState(() => _selectedIndex = 3),
                 ),
