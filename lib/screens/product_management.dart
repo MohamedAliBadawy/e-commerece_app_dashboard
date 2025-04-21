@@ -1,0 +1,1331 @@
+// screens/product_management.dart
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../models/product_model.dart';
+import '../services/product_service.dart';
+import 'package:http/http.dart' as http;
+
+class ProductManagementScreen extends StatefulWidget {
+  @override
+  _ProductManagementScreenState createState() =>
+      _ProductManagementScreenState();
+}
+
+class _ProductManagementScreenState extends State<ProductManagementScreen> {
+  final ProductService _productService = ProductService();
+  final TextEditingController _searchController = TextEditingController();
+  List<Product> _products = [];
+  List<Product> _filteredProducts = [];
+
+  Set<String> _selectedProductIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  void _loadProducts() {
+    _productService.getProducts().listen((products) {
+      setState(() {
+        _products = products;
+        _filteredProducts = products;
+      });
+    });
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProducts = _products;
+      } else {
+        _filteredProducts =
+            _products
+                .where(
+                  (product) =>
+                      product.productName.toLowerCase().contains(
+                        query.toLowerCase(),
+                      ) ||
+                      product.sellerName.toLowerCase().contains(
+                        query.toLowerCase(),
+                      ) ||
+                      product.category.toLowerCase().contains(
+                        query.toLowerCase(),
+                      ),
+                )
+                .toList();
+      }
+    });
+  }
+
+  void _toggleProductSelection(String productId) {
+    setState(() {
+      if (_selectedProductIds.contains(productId)) {
+        _selectedProductIds.remove(productId);
+      } else {
+        _selectedProductIds.add(productId);
+      }
+    });
+  }
+
+  void _clearSelections() {
+    setState(() {
+      _selectedProductIds.clear();
+    });
+  }
+
+  List<Product> get _selectedProducts {
+    return _products
+        .where((product) => _selectedProductIds.contains(product.product_id))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Product Management',
+            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 24.h),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: SizedBox(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      onChanged: _filterProducts,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              ElevatedButton.icon(
+                icon: Icon(Icons.add),
+                label: Text('Add Product'),
+                onPressed: () => _showAddProductDialog(context),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed:
+                    _selectedProductIds.length == 1
+                        ? () => _showEditProductDialog(
+                          context,
+                          _selectedProducts.first,
+                        )
+                        : null, // Disable if not exactly one product selected
+                child: Text('Edit'),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      _selectedProductIds.length == 1
+                          ? Colors.blue
+                          : Colors.grey,
+                ),
+              ),
+              SizedBox(width: 16),
+              TextButton(
+                onPressed:
+                    _selectedProductIds.isNotEmpty
+                        ? () => _deleteSelectedProducts()
+                        : null, // Disable if no products selected
+                child: Text('Delete'),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      _selectedProductIds.isNotEmpty ? Colors.red : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  // Table header
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildTableHeader('Image', 1),
+                        _buildTableHeader('Product name', 2),
+                        _buildTableHeader('Descriptions', 2),
+                        _buildTableHeader('Stock', 1),
+                        _buildTableHeader('Baseline time', 1),
+                        _buildTableHeader('Seller', 1),
+                        _buildTableHeader('Price', 1),
+                        _buildTableHeader('', 1),
+                      ],
+                    ),
+                  ),
+                  // Table body
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _filteredProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = _filteredProducts[index];
+                        return _buildProductRow(product);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(String title, int flex) {
+    return Expanded(
+      flex: flex,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildProductRow(Product product) {
+    final bool isSelected = _selectedProductIds.contains(product.product_id);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child:
+                  product.imgUrl != null
+                      ? Image.network(
+                        product.imgUrl!,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey.shade300,
+                      ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(product.productName),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(product.instructions),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(product.stock.toString()),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('${product.baselineTime} ${product.meridiem}'),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(product.sellerName),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('\$${product.price}'),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (value) {
+                    _toggleProductSelection(product.product_id);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddProductDialog(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+
+    String productId = DateTime.now().millisecondsSinceEpoch.toString();
+    String productName = '';
+    String sellerName = '';
+    String category = 'dessert';
+    int price = 0;
+    bool freeShipping = false;
+    String instructions = '';
+    int stock = 0;
+    int baselineTime = 0;
+    String meridiem = 'AM';
+    String? imgUrl;
+    List<String?> imgUrls = [];
+
+    XFile? _mainImage;
+    List<XFile> _additionalImages = [];
+    final ImagePicker _picker = ImagePicker();
+
+    // Preview widgets
+    Widget? _mainImagePreview;
+    List<Widget> _additionalImagePreviews = [];
+
+    Future<void> _pickMainImage() async {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        _mainImage = image;
+
+        // Create a preview
+        _mainImagePreview = FutureBuilder<Uint8List>(
+          future: image.readAsBytes(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done &&
+                snapshot.data != null) {
+              return Image.memory(
+                snapshot.data!,
+                fit: BoxFit.cover,
+                height: 100,
+              );
+            } else {
+              return Container(
+                height: 100,
+                color: Colors.grey[200],
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+          },
+        );
+
+        // Need to call setState to update the dialog
+        if (mounted) setState(() {});
+      }
+    }
+
+    Future<void> _pickAdditionalImages() async {
+      final List<XFile>? images = await _picker.pickMultiImage();
+      if (images != null && images.isNotEmpty) {
+        _additionalImages.addAll(images);
+
+        // Create previews for each image
+        for (var image in images) {
+          _additionalImagePreviews.add(
+            FutureBuilder<Uint8List>(
+              future: image.readAsBytes(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.data != null) {
+                  return Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Image.memory(
+                      snapshot.data!,
+                      fit: BoxFit.cover,
+                      width: 80,
+                      height: 80,
+                    ),
+                  );
+                } else {
+                  return Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey[200],
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+              },
+            ),
+          );
+        }
+
+        // Need to call setState to update the dialog
+        if (mounted) setState(() {});
+      }
+    }
+
+    // Actually show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Add New Product'),
+              content: Container(
+                width: 600,
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Product Name',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter product name';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  productName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Seller Name',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter seller name';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  sellerName = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButton<String>(
+                                value: category,
+                                items:
+                                    [
+                                      'instant',
+                                      'household',
+                                      'fresh',
+                                      'dessert',
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    category = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: 'Price'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter price';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  price = int.parse(value!);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: 'Stock'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter stock';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  stock = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      decoration: InputDecoration(
+                                        labelText: 'Baseline Time',
+                                        hintText: 'Enter 1-12',
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter
+                                            .digitsOnly, // Only allow digits
+                                        LengthLimitingTextInputFormatter(
+                                          2,
+                                        ), // Max 2 characters
+                                      ],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter time';
+                                        }
+
+                                        final number = int.tryParse(value);
+                                        if (number == null) {
+                                          return 'Please enter a valid number';
+                                        }
+
+                                        if (number < 1 || number > 12) {
+                                          return 'Please enter between 1 and 12';
+                                        }
+
+                                        return null;
+                                      },
+                                      onSaved: (value) {
+                                        baselineTime = int.parse(value!);
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  DropdownButton<String>(
+                                    value: meridiem,
+                                    items:
+                                        ['AM', 'PM'].map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        meridiem = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        CheckboxListTile(
+                          title: Text('Free Shipping'),
+                          value: freeShipping,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              freeShipping = value!;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          decoration: InputDecoration(
+                            labelText: 'Instructions',
+                          ),
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter instructions';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            instructions = value!;
+                          },
+                        ),
+                        SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Main Image'),
+                                  SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: _pickMainImage,
+                                    child: Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child:
+                                          _mainImagePreview != null
+                                              ? _mainImagePreview
+                                              : Center(
+                                                child: Icon(
+                                                  Icons.add_photo_alternate,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Additional Images'),
+                                  SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: _pickAdditionalImages,
+                                    child: Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child:
+                                          _additionalImagePreviews.isNotEmpty
+                                              ? ListView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                children:
+                                                    _additionalImagePreviews,
+                                              )
+                                              : Center(
+                                                child: Icon(
+                                                  Icons.add_photo_alternate,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: Text('Save'),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
+
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            content: Row(
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(width: 16),
+                                Text("Saving product..."),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+
+                      try {
+                        // Upload main image if selected
+                        if (_mainImage != null) {
+                          imgUrl = await _productService.uploadImageToImgBB(
+                            _mainImage!,
+                          );
+                        }
+
+                        // Upload additional images if selected
+                        if (_additionalImages.isNotEmpty) {
+                          imgUrls = await _productService.uploadProductImages(
+                            _additionalImages,
+                          );
+                        }
+
+                        // Create product object
+                        Product newProduct = Product(
+                          product_id: productId,
+                          productName: productName,
+                          sellerName: sellerName,
+                          category: category,
+                          price: price,
+                          freeShipping: freeShipping,
+                          instructions: instructions,
+                          stock: stock,
+                          baselineTime: baselineTime,
+                          meridiem: meridiem,
+                          imgUrl: imgUrl,
+                          imgUrls: imgUrls,
+                        );
+
+                        // Save to Firestore
+                        await _productService.addProduct(newProduct);
+
+                        // Close loading dialog
+                        Navigator.of(context).pop();
+
+                        // Close form dialog
+                        Navigator.of(context).pop();
+
+                        // Show success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Product added successfully')),
+                        );
+                      } catch (e) {
+                        // Close loading dialog
+                        Navigator.of(context).pop();
+
+                        // Show error message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: ${e.toString()}')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Edit Product Dialog
+  void _showEditProductDialog(BuildContext context, Product product) {
+    final _formKey = GlobalKey<FormState>();
+
+    // Initialize with existing product data
+    String productId = product.product_id;
+    String productName = product.productName;
+    String sellerName = product.sellerName;
+    String category = product.category;
+
+    int price = product.price;
+    bool freeShipping = product.freeShipping;
+    String instructions = product.instructions;
+    int stock = product.stock;
+    int baselineTime = product.baselineTime;
+    String meridiem = product.meridiem;
+    String? imgUrl = product.imgUrl;
+    List<String?> imgUrls = List.from(product.imgUrls);
+
+    XFile? _mainImage;
+    List<XFile> _additionalImages = [];
+    final ImagePicker _picker = ImagePicker();
+
+    // Preview widgets
+    Widget? _mainImagePreview;
+    List<Widget> _additionalImagePreviews = [];
+
+    // Initialize with existing image
+    if (imgUrl != null) {
+      _mainImagePreview = Image.network(imgUrl, fit: BoxFit.cover, height: 100);
+    }
+
+    // Initialize with existing additional images
+    for (var url in imgUrls) {
+      if (url != null) {
+        _additionalImagePreviews.add(
+          Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Image.network(url, fit: BoxFit.cover, width: 80, height: 80),
+          ),
+        );
+      }
+    }
+
+    // Actually show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            // Function to pick main image
+            Future<void> _pickMainImage() async {
+              final XFile? image = await _picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (image != null) {
+                _mainImage = image;
+
+                // Create a preview
+                _mainImagePreview = FutureBuilder<Uint8List>(
+                  future: image.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.data != null) {
+                      return Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
+                        height: 100,
+                      );
+                    } else {
+                      return Container(
+                        height: 100,
+                        color: Colors.grey[200],
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                  },
+                );
+
+                // Update the dialog UI
+                setDialogState(() {});
+              }
+            }
+
+            // Function to pick additional images
+            Future<void> _pickAdditionalImages() async {
+              final List<XFile>? images = await _picker.pickMultiImage();
+              if (images != null && images.isNotEmpty) {
+                _additionalImages.addAll(images);
+
+                // Create previews for each image
+                for (var image in images) {
+                  _additionalImagePreviews.add(
+                    FutureBuilder<Uint8List>(
+                      future: image.readAsBytes(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done &&
+                            snapshot.data != null) {
+                          return Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Image.memory(
+                              snapshot.data!,
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
+                          );
+                        } else {
+                          return Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey[200],
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }
+
+                // Update the dialog UI
+                setDialogState(() {});
+              }
+            }
+
+            return AlertDialog(
+              title: Text('Edit Product'),
+              content: Container(
+                width: 600,
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: productName,
+                                decoration: InputDecoration(
+                                  labelText: 'Product Name',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter product name';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  productName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: sellerName,
+                                decoration: InputDecoration(
+                                  labelText: 'Seller Name',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter seller name';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  sellerName = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButton<String>(
+                                value: category,
+                                items:
+                                    [
+                                      'instant',
+                                      'household',
+                                      'fresh',
+                                      'dessert',
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                onChanged: (String? newValue) {
+                                  setDialogState(() {
+                                    category = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: price.toString(),
+                                decoration: InputDecoration(labelText: 'Price'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter price';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  price = int.parse(value!);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: stock.toString(),
+                                decoration: InputDecoration(labelText: 'Stock'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter stock';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  stock = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      initialValue: baselineTime.toString(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Baseline Time',
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter time';
+                                        }
+                                        return null;
+                                      },
+                                      onSaved: (value) {
+                                        baselineTime = int.parse(value!);
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  DropdownButton<String>(
+                                    value: meridiem,
+                                    items:
+                                        ['AM', 'PM'].map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setDialogState(() {
+                                        meridiem = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        CheckboxListTile(
+                          title: Text('Free Shipping'),
+                          value: freeShipping,
+                          onChanged: (bool? value) {
+                            setDialogState(() {
+                              freeShipping = value!;
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: instructions,
+                          decoration: InputDecoration(
+                            labelText: 'Instructions',
+                          ),
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter instructions';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            instructions = value!;
+                          },
+                        ),
+                        SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Main Image'),
+                                  SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: _pickMainImage,
+                                    child: Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child:
+                                          _mainImagePreview != null
+                                              ? _mainImagePreview
+                                              : Center(
+                                                child: Icon(
+                                                  Icons.add_photo_alternate,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Additional Images'),
+                                  SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: _pickAdditionalImages,
+                                    child: Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child:
+                                          _additionalImagePreviews.isNotEmpty
+                                              ? ListView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                children:
+                                                    _additionalImagePreviews,
+                                              )
+                                              : Center(
+                                                child: Icon(
+                                                  Icons.add_photo_alternate,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: Text('Save Changes'),
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
+
+                      // Show loading indicator
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            content: Row(
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(width: 16),
+                                Text("Updating product..."),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+
+                      try {
+                        // Upload main image if a new one was selected
+                        if (_mainImage != null) {
+                          imgUrl = await _productService.uploadImageToImgBB(
+                            _mainImage!,
+                          );
+                        }
+
+                        // Upload additional images if new ones were selected
+                        if (_additionalImages.isNotEmpty) {
+                          List<String?> newImgUrls = await _productService
+                              .uploadProductImages(_additionalImages);
+
+                          // Combine existing and new image URLs
+                          // This approach keeps existing images and adds new ones
+                          imgUrls.addAll(newImgUrls);
+                        }
+
+                        // Create updated product object
+                        Product updatedProduct = Product(
+                          product_id: productId,
+                          productName: productName,
+                          sellerName: sellerName,
+                          category: category,
+                          price: price,
+                          freeShipping: freeShipping,
+                          instructions: instructions,
+                          stock: stock,
+                          baselineTime: baselineTime,
+                          meridiem: meridiem,
+                          imgUrl: imgUrl,
+                          imgUrls: imgUrls,
+                        );
+
+                        // Update in Firestore
+                        await _productService.updateProduct(updatedProduct);
+
+                        // Close loading dialog
+                        Navigator.of(context).pop();
+
+                        // Close form dialog
+                        Navigator.of(context).pop();
+
+                        // Show success message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Product updated successfully'),
+                          ),
+                        );
+
+                        // Clear selection
+                        _clearSelections();
+                      } catch (e) {
+                        // Close loading dialog
+                        Navigator.of(context).pop();
+
+                        // Show error message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: ${e.toString()}')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Delete Product confirmation
+  void _deleteSelectedProducts() {
+    if (_selectedProductIds.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text(
+            _selectedProductIds.length == 1
+                ? 'Are you sure you want to delete this product?'
+                : 'Are you sure you want to delete ${_selectedProductIds.length} products?',
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: Text('Delete'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.of(context).pop();
+
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      content: Row(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 16),
+                          Text("Deleting products..."),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  // Delete each selected product
+                  for (String productId in _selectedProductIds) {
+                    await _productService.deleteProduct(productId);
+                  }
+
+                  // Clear selections
+                  _clearSelections();
+
+                  // Close loading dialog
+                  Navigator.of(context).pop();
+
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Products deleted successfully')),
+                  );
+                } catch (e) {
+                  // Close loading dialog
+                  Navigator.of(context).pop();
+
+                  // Show error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
