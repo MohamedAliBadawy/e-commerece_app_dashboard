@@ -1,4 +1,22 @@
 // models/product_model.dart
+
+import 'dart:core';
+
+class PricePoint {
+  int quantity;
+  int price;
+
+  PricePoint({required this.quantity, required this.price});
+
+  Map<String, dynamic> toMap() {
+    return {'quantity': quantity, 'price': price};
+  }
+
+  factory PricePoint.fromMap(Map<String, dynamic> map) {
+    return PricePoint(quantity: map['quantity'], price: map['price']);
+  }
+}
+
 class Product {
   final String product_id;
   final String productName;
@@ -6,8 +24,9 @@ class Product {
   final String instructions;
   final String category;
   final int stock;
-  final int baselineTime;
   final int price;
+  final int baselineTime;
+  final List<PricePoint> pricePoints;
   final bool freeShipping;
   final String meridiem;
   final String? imgUrl;
@@ -18,14 +37,15 @@ class Product {
     required this.productName,
     required this.sellerName,
     required this.category,
-    required this.price,
     required this.freeShipping,
     required this.instructions,
     required this.stock,
+    required this.price,
     required this.baselineTime,
     required this.meridiem,
     required this.imgUrl,
     required this.imgUrls,
+    required this.pricePoints,
   });
 
   factory Product.fromMap(Map<String, dynamic> map, String id) {
@@ -34,13 +54,23 @@ class Product {
       productName: map['productName'] ?? '',
       instructions: map['instructions'] ?? '',
       stock: map['stock'] ?? 0,
+      price:
+          (map['pricePoints'] as List?)
+              ?.map((pp) => PricePoint.fromMap(pp))
+              .toList()[0]
+              .price ??
+          0,
       baselineTime: map['baselineTime'] ?? 0,
       meridiem: map['meridiem'] ?? 'AM',
       imgUrl: map['imgUrl'],
       imgUrls: List<String?>.from(map['imgUrls'] ?? []),
       sellerName: map['sellerName'] ?? '',
       category: map['category'] ?? '',
-      price: map['price'] ?? 0,
+      pricePoints:
+          (map['pricePoints'] as List?)
+              ?.map((pp) => PricePoint.fromMap(pp))
+              .toList() ??
+          [],
       freeShipping: map['freeShipping'] ?? false,
     );
   }
@@ -51,14 +81,15 @@ class Product {
       'productName': productName,
       'instructions': instructions,
       'stock': stock,
+      'price': price,
       'baselineTime': baselineTime,
       'meridiem': meridiem,
       'imgUrl': imgUrl,
       'imgUrls': imgUrls,
       'sellerName': sellerName,
       'category': category,
-      'price': price,
       'freeShipping': freeShipping,
+      'pricePoints': pricePoints.map((pp) => pp.toMap()).toList(),
     };
   }
 }

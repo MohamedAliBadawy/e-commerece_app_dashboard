@@ -1,15 +1,14 @@
 // screens/product_management.dart
 import 'dart:typed_data';
 
+import 'package:ecommerce_app_dashboard/models/category_model.dart';
+import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../models/product_model.dart';
 import '../services/product_service.dart';
-import 'package:http/http.dart' as http;
 
 class ProductManagementScreen extends StatefulWidget {
   @override
@@ -19,10 +18,10 @@ class ProductManagementScreen extends StatefulWidget {
 
 class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final ProductService _productService = ProductService();
+
   final TextEditingController _searchController = TextEditingController();
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
-
   Set<String> _selectedProductIds = {};
 
   @override
@@ -287,7 +286,16 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('\$${product.price}'),
+              child: Column(
+                children: [
+                  ...product.pricePoints.map(
+                    (pp) => Text(
+                      '${pp.quantity} qty = \$${pp.price}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
@@ -314,15 +322,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productId = DateTime.now().millisecondsSinceEpoch.toString();
     String productName = '';
     String sellerName = '';
-    String category = 'dessert';
+    String category = '';
+    // For categories
+    List<Category> categories = [];
+    bool isLoadingCategories = true;
     int price = 0;
-    bool freeShipping = false;
+    bool freeShipping = true;
     String instructions = '';
     int stock = 0;
     int baselineTime = 0;
     String meridiem = 'AM';
     String? imgUrl;
     List<String?> imgUrls = [];
+    List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
 
     XFile? _mainImage;
     List<XFile> _additionalImages = [];
@@ -332,83 +344,108 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     Widget? _mainImagePreview;
     List<Widget> _additionalImagePreviews = [];
 
-    Future<void> _pickMainImage() async {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        _mainImage = image;
-
-        // Create a preview
-        _mainImagePreview = FutureBuilder<Uint8List>(
-          future: image.readAsBytes(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.data != null) {
-              return Image.memory(
-                snapshot.data!,
-                fit: BoxFit.cover,
-                height: 100,
-              );
-            } else {
-              return Container(
-                height: 100,
-                color: Colors.grey[200],
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-          },
-        );
-
-        // Need to call setState to update the dialog
-        if (mounted) setState(() {});
-      }
-    }
-
-    Future<void> _pickAdditionalImages() async {
-      final List<XFile>? images = await _picker.pickMultiImage();
-      if (images != null && images.isNotEmpty) {
-        _additionalImages.addAll(images);
-
-        // Create previews for each image
-        for (var image in images) {
-          _additionalImagePreviews.add(
-            FutureBuilder<Uint8List>(
-              future: image.readAsBytes(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.data != null) {
-                  return Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Image.memory(
-                      snapshot.data!,
-                      fit: BoxFit.cover,
-                      width: 80,
-                      height: 80,
-                    ),
-                  );
-                } else {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[200],
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-              },
-            ),
-          );
-        }
-
-        // Need to call setState to update the dialog
-        if (mounted) setState(() {});
-      }
-    }
-
     // Actually show the dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
+            // Load categories when dialog opens
+            if (isLoadingCategories) {
+              CategoryService()
+                  .getCategoriesOnce()
+                  .then((loadedCategories) {
+                    setDialogState(() {
+                      categories = loadedCategories;
+                      isLoadingCategories = false;
+                      // Set default category if available
+                      if (categories.isNotEmpty && category.isEmpty) {
+                        category = categories.first.id;
+                      }
+                    });
+                  })
+                  .catchError((error) {
+                    print('Error loading categories: $error');
+                    setDialogState(() {
+                      isLoadingCategories = false;
+                    });
+                  });
+            }
+
+            // Move these functions inside the StatefulBuilder
+            Future<void> _pickMainImage() async {
+              final XFile? image = await _picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (image != null) {
+                _mainImage = image;
+
+                // Create a preview
+                _mainImagePreview = FutureBuilder<Uint8List>(
+                  future: image.readAsBytes(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.data != null) {
+                      return Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.cover,
+                        height: 100,
+                      );
+                    } else {
+                      return Container(
+                        height: 100,
+                        color: Colors.grey[200],
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                  },
+                );
+
+                // Use setDialogState instead of setState
+                setDialogState(() {});
+              }
+            }
+
+            Future<void> _pickAdditionalImages() async {
+              final List<XFile>? images = await _picker.pickMultiImage();
+              if (images != null && images.isNotEmpty) {
+                _additionalImages.addAll(images);
+
+                // Create previews for each image
+                for (var image in images) {
+                  _additionalImagePreviews.add(
+                    FutureBuilder<Uint8List>(
+                      future: image.readAsBytes(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done &&
+                            snapshot.data != null) {
+                          return Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Image.memory(
+                              snapshot.data!,
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
+                          );
+                        } else {
+                          return Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey[200],
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }
+
+                // Use setDialogState instead of setState
+                setDialogState(() {});
+              }
+            }
+
             return AlertDialog(
               title: Text('Add New Product'),
               content: Container(
@@ -460,41 +497,133 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: DropdownButton<String>(
-                                value: category,
-                                items:
-                                    [
-                                      'instant',
-                                      'household',
-                                      'fresh',
-                                      'dessert',
-                                    ].map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    category = newValue!;
-                                  });
-                                },
-                              ),
+                              child:
+                                  isLoadingCategories
+                                      ? Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                      : DropdownButton<String>(
+                                        value:
+                                            categories.isNotEmpty
+                                                ? category
+                                                : null,
+                                        items:
+                                            categories.map((Category value) {
+                                              return DropdownMenuItem<String>(
+                                                value: value.id,
+                                                child: Text(value.name),
+                                              );
+                                            }).toList(),
+                                        onChanged: (String? newValue) {
+                                          setDialogState(() {
+                                            category = newValue!;
+                                          });
+                                        },
+                                      ),
                             ),
                             SizedBox(width: 16),
                             Expanded(
-                              child: TextFormField(
-                                decoration: InputDecoration(labelText: 'Price'),
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter price';
-                                  }
-                                  return null;
-                                },
-                                onSaved: (value) {
-                                  price = int.parse(value!);
-                                },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Quantity-Based Pricing',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: pricePoints.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                enabled: index != 0,
+                                                initialValue:
+                                                    pricePoints[index].quantity
+                                                        .toString(),
+                                                decoration: InputDecoration(
+                                                  labelText: 'Quantity',
+                                                ),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {
+                                                  setDialogState(() {
+                                                    pricePoints[index]
+                                                            .quantity =
+                                                        int.tryParse(value) ??
+                                                        1;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            SizedBox(width: 16),
+                                            Expanded(
+                                              child: TextFormField(
+                                                initialValue:
+                                                    pricePoints[index].price
+                                                        .toString(),
+                                                decoration: InputDecoration(
+                                                  labelText: 'Price',
+                                                ),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {
+                                                  setDialogState(() {
+                                                    pricePoints[index].price =
+                                                        int.tryParse(value) ??
+                                                        0;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete),
+                                              onPressed:
+                                                  index == 0
+                                                      ? null
+                                                      : () {
+                                                        setDialogState(() {
+                                                          pricePoints.removeAt(
+                                                            index,
+                                                          );
+                                                        });
+                                                      },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ElevatedButton.icon(
+                                    icon: Icon(Icons.add),
+                                    label: Text('Add Price Point'),
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        pricePoints.add(
+                                          PricePoint(
+                                            quantity:
+                                                pricePoints.isEmpty
+                                                    ? 1
+                                                    : pricePoints
+                                                            .last
+                                                            .quantity +
+                                                        1,
+                                            price: 0,
+                                          ),
+                                        );
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -567,7 +696,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                           );
                                         }).toList(),
                                     onChanged: (String? newValue) {
-                                      setState(() {
+                                      setDialogState(() {
                                         meridiem = newValue!;
                                       });
                                     },
@@ -576,17 +705,6 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               ),
                             ),
                           ],
-                        ),
-                        SizedBox(height: 16),
-                        CheckboxListTile(
-                          title: Text('Free Shipping'),
-                          value: freeShipping,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              freeShipping = value!;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
                         ),
                         SizedBox(height: 16),
                         TextFormField(
@@ -728,6 +846,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           sellerName: sellerName,
                           category: category,
                           price: price,
+                          pricePoints: pricePoints,
                           freeShipping: freeShipping,
                           instructions: instructions,
                           stock: stock,
@@ -779,8 +898,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productName = product.productName;
     String sellerName = product.sellerName;
     String category = product.category;
-
+    // For categories
+    List<Category> categories = [];
+    bool isLoadingCategories = true;
     int price = product.price;
+    List<PricePoint> pricePoints = product.pricePoints;
+
     bool freeShipping = product.freeShipping;
     String instructions = product.instructions;
     int stock = product.stock;
@@ -820,6 +943,28 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            // Load categories when dialog opens
+            if (isLoadingCategories) {
+              CategoryService()
+                  .getCategoriesOnce()
+                  .then((loadedCategories) {
+                    setDialogState(() {
+                      categories = loadedCategories;
+                      isLoadingCategories = false;
+                      // Set default category if available
+                      if (categories.isNotEmpty && category.isEmpty) {
+                        category = categories.first.id;
+                      }
+                    });
+                  })
+                  .catchError((error) {
+                    print('Error loading categories: $error');
+                    setDialogState(() {
+                      isLoadingCategories = false;
+                    });
+                  });
+            }
+
             // Function to pick main image
             Future<void> _pickMainImage() async {
               final XFile? image = await _picker.pickImage(
@@ -948,42 +1093,132 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: DropdownButton<String>(
-                                value: category,
-                                items:
-                                    [
-                                      'instant',
-                                      'household',
-                                      'fresh',
-                                      'dessert',
-                                    ].map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                onChanged: (String? newValue) {
-                                  setDialogState(() {
-                                    category = newValue!;
-                                  });
-                                },
-                              ),
+                              child:
+                                  isLoadingCategories
+                                      ? Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                      : DropdownButton<String>(
+                                        value: category,
+
+                                        items:
+                                            categories.map((Category value) {
+                                              return DropdownMenuItem<String>(
+                                                value: value.id,
+                                                child: Text(value.name),
+                                              );
+                                            }).toList(),
+
+                                        onChanged: (String? newValue) {
+                                          setDialogState(() {
+                                            category = newValue!;
+                                          });
+                                        },
+                                      ),
                             ),
                             SizedBox(width: 16),
                             Expanded(
-                              child: TextFormField(
-                                initialValue: price.toString(),
-                                decoration: InputDecoration(labelText: 'Price'),
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter price';
-                                  }
-                                  return null;
-                                },
-                                onSaved: (value) {
-                                  price = int.parse(value!);
-                                },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Quantity-Based Pricing',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: pricePoints.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                enabled: index != 0,
+                                                initialValue:
+                                                    pricePoints[index].quantity
+                                                        .toString(),
+                                                decoration: InputDecoration(
+                                                  labelText: 'Quantity',
+                                                ),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {
+                                                  setDialogState(() {
+                                                    pricePoints[index]
+                                                            .quantity =
+                                                        int.tryParse(value) ??
+                                                        1;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            SizedBox(width: 16),
+                                            Expanded(
+                                              child: TextFormField(
+                                                initialValue:
+                                                    pricePoints[index].price
+                                                        .toString(),
+                                                decoration: InputDecoration(
+                                                  labelText: 'Price',
+                                                ),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {
+                                                  setDialogState(() {
+                                                    pricePoints[index].price =
+                                                        int.tryParse(value) ??
+                                                        0;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete),
+                                              onPressed:
+                                                  index == 0
+                                                      ? null
+                                                      : () {
+                                                        setDialogState(() {
+                                                          pricePoints.removeAt(
+                                                            index,
+                                                          );
+                                                        });
+                                                      },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ElevatedButton.icon(
+                                    icon: Icon(Icons.add),
+                                    label: Text('Add Price Point'),
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        pricePoints.add(
+                                          PricePoint(
+                                            quantity:
+                                                pricePoints.isEmpty
+                                                    ? 1
+                                                    : pricePoints
+                                                            .last
+                                                            .quantity +
+                                                        1,
+                                            price: 0,
+                                          ),
+                                        );
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -1050,17 +1285,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 16),
-                        CheckboxListTile(
-                          title: Text('Free Shipping'),
-                          value: freeShipping,
-                          onChanged: (bool? value) {
-                            setDialogState(() {
-                              freeShipping = value!;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
-                        ),
+
                         SizedBox(height: 16),
                         TextFormField(
                           initialValue: instructions,
@@ -1205,6 +1430,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           sellerName: sellerName,
                           category: category,
                           price: price,
+                          pricePoints: pricePoints,
                           freeShipping: freeShipping,
                           instructions: instructions,
                           stock: stock,

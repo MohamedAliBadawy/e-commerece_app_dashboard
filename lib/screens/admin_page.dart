@@ -1,3 +1,4 @@
+import 'package:ecommerce_app_dashboard/screens/category_management.dart';
 import 'package:flutter/material.dart';
 import 'product_management.dart';
 
@@ -15,6 +16,7 @@ class _AdminPageState extends State<AdminPage> {
     ProductManagementScreen(),
     ProductManagementScreen(),
     ProductManagementScreen(),
+    CategoryManagementScreen(),
   ];
 
   @override
@@ -64,6 +66,11 @@ class _AdminPageState extends State<AdminPage> {
                   title: 'Product Management',
                   isSelected: _selectedIndex == 4,
                   onTap: () => setState(() => _selectedIndex = 4),
+                ),
+                SidebarItem(
+                  title: 'Category Management',
+                  isSelected: _selectedIndex == 5,
+                  onTap: () => setState(() => _selectedIndex = 5),
                 ),
               ],
             ),
