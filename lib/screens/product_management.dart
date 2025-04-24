@@ -1,6 +1,7 @@
 // screens/product_management.dart
-import 'dart:typed_data';
+import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/category_model.dart';
 import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:flutter/material.dart';
@@ -18,71 +19,62 @@ class ProductManagementScreen extends StatefulWidget {
 
 class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final ProductService _productService = ProductService();
-
+  String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
-  Set<String> _selectedProductIds = {};
+  final List<Product> _selectedProducts = [];
+  Timer? _debounce;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProducts();
+  Stream<QuerySnapshot> getProductsStream(String query) {
+    if (query.isEmpty) {
+      return FirebaseFirestore.instance.collection('products').snapshots();
+    } else {
+      return FirebaseFirestore.instance
+          .collection('products')
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThan: query + 'z')
+          .snapshots();
+    }
   }
 
-  void _loadProducts() {
-    _productService.getProducts().listen((products) {
-      setState(() {
-        _products = products;
-        _filteredProducts = products;
-      });
-    });
-  }
-
-  void _filterProducts(String query) {
+  void _selectProduct(Product product) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredProducts = _products;
-      } else {
-        _filteredProducts =
-            _products
-                .where(
-                  (product) =>
-                      product.productName.toLowerCase().contains(
-                        query.toLowerCase(),
-                      ) ||
-                      product.sellerName.toLowerCase().contains(
-                        query.toLowerCase(),
-                      ) ||
-                      product.category.toLowerCase().contains(
-                        query.toLowerCase(),
-                      ),
-                )
-                .toList();
-      }
-    });
-  }
-
-  void _toggleProductSelection(String productId) {
-    setState(() {
-      if (_selectedProductIds.contains(productId)) {
-        _selectedProductIds.remove(productId);
-      } else {
-        _selectedProductIds.add(productId);
+      // Check if not already selected
+      if (!_selectedProducts.any((p) => p.product_id == product.product_id)) {
+        _selectedProducts.add(product);
       }
     });
   }
 
   void _clearSelections() {
     setState(() {
-      _selectedProductIds.clear();
+      _selectedProducts.clear();
     });
   }
 
-  List<Product> get _selectedProducts {
-    return _products
-        .where((product) => _selectedProductIds.contains(product.product_id))
-        .toList();
+  // 2. Function to deselect a product
+  void _deselectProduct(Product product) {
+    setState(() {
+      // Remove all instances of this product (should be just one)
+      _selectedProducts.removeWhere((p) => p.product_id == product.product_id);
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = query;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -114,7 +106,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
-                      onChanged: _filterProducts,
+                      onChanged: _onSearchChanged,
                     ),
                   ),
                 ),
@@ -136,7 +128,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             children: [
               TextButton(
                 onPressed:
-                    _selectedProductIds.length == 1
+                    _selectedProducts.length == 1
                         ? () => _showEditProductDialog(
                           context,
                           _selectedProducts.first,
@@ -145,21 +137,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 child: Text('Edit'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      _selectedProductIds.length == 1
-                          ? Colors.blue
-                          : Colors.grey,
+                      _selectedProducts.length == 1 ? Colors.blue : Colors.grey,
                 ),
               ),
               SizedBox(width: 16),
               TextButton(
                 onPressed:
-                    _selectedProductIds.isNotEmpty
+                    _selectedProducts.isNotEmpty
                         ? () => _deleteSelectedProducts()
                         : null, // Disable if no products selected
                 child: Text('Delete'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      _selectedProductIds.isNotEmpty ? Colors.red : Colors.grey,
+                      _selectedProducts.isNotEmpty ? Colors.red : Colors.grey,
                 ),
               ),
             ],
@@ -195,11 +185,32 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   ),
                   // Table body
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: _filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        final product = _filteredProducts[index];
-                        return _buildProductRow(product);
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: getProductsStream(_searchQuery),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Error: ${snapshot.error}'),
+                          );
+                        }
+                        // 3. Check for null data
+                        if (!snapshot.hasData || snapshot.data == null) {
+                          return Center(child: Text('No products available'));
+                        }
+                        final products = snapshot.data!.docs;
+
+                        if (products.isEmpty) {
+                          return Center(child: Text('No products found'));
+                        }
+                        return ListView.builder(
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = Product.fromMap(
+                              products[index].data() as Map<String, dynamic>,
+                            );
+                            return _buildProductRow(product);
+                          },
+                        );
                       },
                     ),
                   ),
@@ -223,7 +234,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   }
 
   Widget _buildProductRow(Product product) {
-    final bool isSelected = _selectedProductIds.contains(product.product_id);
+    final bool isSelected = _selectedProducts.any(
+      (p) => p.product_id == product.product_id,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -305,7 +318,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 Checkbox(
                   value: isSelected,
                   onChanged: (value) {
-                    _toggleProductSelection(product.product_id);
+                    if (isSelected) {
+                      _deselectProduct(product);
+                    } else {
+                      _selectProduct(product);
+                    }
                   },
                 ),
               ],
@@ -335,6 +352,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String? imgUrl;
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
+
+    bool _imagesLoading = false;
 
     XFile? _mainImage;
     List<XFile> _additionalImages = [];
@@ -372,8 +391,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   });
             }
 
-            // Move these functions inside the StatefulBuilder
+            // Function to pick main image
             Future<void> _pickMainImage() async {
+              setDialogState(() => _imagesLoading = true);
+
               final XFile? image = await _picker.pickImage(
                 source: ImageSource.gallery,
               );
@@ -401,48 +422,52 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   },
                 );
 
-                // Use setDialogState instead of setState
-                setDialogState(() {});
+                // Update the dialog UI
+                setDialogState(() {
+                  _imagesLoading = false;
+                });
               }
             }
 
+            // Function to pick additional images
             Future<void> _pickAdditionalImages() async {
+              setDialogState(() => _imagesLoading = true);
+
               final List<XFile>? images = await _picker.pickMultiImage();
               if (images != null && images.isNotEmpty) {
-                _additionalImages.addAll(images);
+                setDialogState(() {
+                  _additionalImages.clear();
+                  _additionalImagePreviews.clear();
+                  _additionalImages.addAll(images);
 
-                // Create previews for each image
-                for (var image in images) {
+                  // Show loading state immediately
                   _additionalImagePreviews.add(
-                    FutureBuilder<Uint8List>(
-                      future: image.readAsBytes(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.data != null) {
-                          return Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Image.memory(
-                              snapshot.data!,
-                              fit: BoxFit.cover,
-                              width: 80,
-                              height: 80,
-                            ),
-                          );
-                        } else {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[200],
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                      },
+                    Center(child: CircularProgressIndicator()),
+                  );
+                });
+
+                // Process images and build previews
+                final List<Widget> newPreviews = [];
+                for (var image in images) {
+                  final bytes = await image.readAsBytes();
+                  newPreviews.add(
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Image.memory(
+                        bytes,
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                      ),
                     ),
                   );
                 }
 
-                // Use setDialogState instead of setState
-                setDialogState(() {});
+                // Update with final previews
+                setDialogState(() {
+                  _additionalImagePreviews = newPreviews;
+                  _imagesLoading = false;
+                });
               }
             }
 
@@ -803,83 +828,88 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 ),
                 ElevatedButton(
                   child: Text('Save'),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
+                  onPressed:
+                      _imagesLoading
+                          ? null
+                          : () async {
+                            if (_formKey.currentState!.validate()) {
+                              _formKey.currentState!.save();
 
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            content: Row(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(width: 16),
-                                Text("Saving product..."),
-                              ],
-                            ),
-                          );
-                        },
-                      );
+                              // Show loading indicator
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    content: Row(
+                                      children: [
+                                        CircularProgressIndicator(),
+                                        SizedBox(width: 16),
+                                        Text("Saving product..."),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
 
-                      try {
-                        // Upload main image if selected
-                        if (_mainImage != null) {
-                          imgUrl = await _productService.uploadImageToImgBB(
-                            _mainImage!,
-                          );
-                        }
+                              try {
+                                // Upload main image if selected
+                                if (_mainImage != null) {
+                                  imgUrl = await _productService
+                                      .uploadImageToImgBB(_mainImage!);
+                                }
 
-                        // Upload additional images if selected
-                        if (_additionalImages.isNotEmpty) {
-                          imgUrls = await _productService.uploadProductImages(
-                            _additionalImages,
-                          );
-                        }
+                                // Upload additional images if selected
+                                if (_additionalImages.isNotEmpty) {
+                                  imgUrls = await _productService
+                                      .uploadProductImages(_additionalImages);
+                                }
 
-                        // Create product object
-                        Product newProduct = Product(
-                          product_id: productId,
-                          productName: productName,
-                          sellerName: sellerName,
-                          category: category,
-                          price: price,
-                          pricePoints: pricePoints,
-                          freeShipping: freeShipping,
-                          instructions: instructions,
-                          stock: stock,
-                          baselineTime: baselineTime,
-                          meridiem: meridiem,
-                          imgUrl: imgUrl,
-                          imgUrls: imgUrls,
-                        );
+                                // Create product object
+                                Product newProduct = Product(
+                                  product_id: productId,
+                                  productName: productName,
+                                  sellerName: sellerName,
+                                  category: category,
+                                  price: price,
+                                  pricePoints: pricePoints,
+                                  freeShipping: freeShipping,
+                                  instructions: instructions,
+                                  stock: stock,
+                                  baselineTime: baselineTime,
+                                  meridiem: meridiem,
+                                  imgUrl: imgUrl,
+                                  imgUrls: imgUrls,
+                                );
 
-                        // Save to Firestore
-                        await _productService.addProduct(newProduct);
+                                // Save to Firestore
+                                await _productService.addProduct(newProduct);
 
-                        // Close loading dialog
-                        Navigator.of(context).pop();
+                                // Close loading dialog
+                                Navigator.of(context).pop();
 
-                        // Close form dialog
-                        Navigator.of(context).pop();
+                                // Close form dialog
+                                Navigator.of(context).pop();
 
-                        // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Product added successfully')),
-                        );
-                      } catch (e) {
-                        // Close loading dialog
-                        Navigator.of(context).pop();
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Product added successfully'),
+                                  ),
+                                );
+                              } catch (e) {
+                                // Close loading dialog
+                                Navigator.of(context).pop();
 
-                        // Show error message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
-                  },
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: ${e.toString()}'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                 ),
               ],
             );
@@ -911,6 +941,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String meridiem = product.meridiem;
     String? imgUrl = product.imgUrl;
     List<String?> imgUrls = List.from(product.imgUrls);
+
+    bool _imagesLoading = false;
 
     XFile? _mainImage;
     List<XFile> _additionalImages = [];
@@ -967,6 +999,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
             // Function to pick main image
             Future<void> _pickMainImage() async {
+              setDialogState(() => _imagesLoading = true);
+
               final XFile? image = await _picker.pickImage(
                 source: ImageSource.gallery,
               );
@@ -995,48 +1029,51 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 );
 
                 // Update the dialog UI
-                setDialogState(() {});
+                setDialogState(() {
+                  _imagesLoading = false;
+                });
               }
             }
 
             // Function to pick additional images
             Future<void> _pickAdditionalImages() async {
+              setDialogState(() => _imagesLoading = true);
+
               final List<XFile>? images = await _picker.pickMultiImage();
               if (images != null && images.isNotEmpty) {
-                _additionalImages.addAll(images);
+                setDialogState(() {
+                  _additionalImages.clear();
+                  _additionalImagePreviews.clear();
+                  _additionalImages.addAll(images);
 
-                // Create previews for each image
-                for (var image in images) {
+                  // Show loading state immediately
                   _additionalImagePreviews.add(
-                    FutureBuilder<Uint8List>(
-                      future: image.readAsBytes(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.data != null) {
-                          return Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Image.memory(
-                              snapshot.data!,
-                              fit: BoxFit.cover,
-                              width: 80,
-                              height: 80,
-                            ),
-                          );
-                        } else {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[200],
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                      },
+                    Center(child: CircularProgressIndicator()),
+                  );
+                });
+
+                // Process images and build previews
+                final List<Widget> newPreviews = [];
+                for (var image in images) {
+                  final bytes = await image.readAsBytes();
+                  newPreviews.add(
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Image.memory(
+                        bytes,
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                      ),
                     ),
                   );
                 }
 
-                // Update the dialog UI
-                setDialogState(() {});
+                // Update with final previews
+                setDialogState(() {
+                  _additionalImagePreviews = newPreviews;
+                  _imagesLoading = false;
+                });
               }
             }
 
@@ -1384,91 +1421,101 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 ),
                 ElevatedButton(
                   child: Text('Save Changes'),
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
+                  onPressed:
+                      _imagesLoading
+                          ? null
+                          : () async {
+                            if (_formKey.currentState!.validate()) {
+                              _formKey.currentState!.save();
 
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            content: Row(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(width: 16),
-                                Text("Updating product..."),
-                              ],
-                            ),
-                          );
-                        },
-                      );
+                              // Show loading indicator
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    content: Row(
+                                      children: [
+                                        CircularProgressIndicator(),
+                                        SizedBox(width: 16),
+                                        Text("Updating product..."),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
 
-                      try {
-                        // Upload main image if a new one was selected
-                        if (_mainImage != null) {
-                          imgUrl = await _productService.uploadImageToImgBB(
-                            _mainImage!,
-                          );
-                        }
+                              try {
+                                // Upload main image if a new one was selected
+                                if (_mainImage != null) {
+                                  imgUrl = await _productService
+                                      .uploadImageToImgBB(_mainImage!);
+                                }
 
-                        // Upload additional images if new ones were selected
-                        if (_additionalImages.isNotEmpty) {
-                          List<String?> newImgUrls = await _productService
-                              .uploadProductImages(_additionalImages);
+                                // Upload additional images if new ones were selected
+                                if (_additionalImages.isNotEmpty) {
+                                  List<String?> newImgUrls =
+                                      await _productService.uploadProductImages(
+                                        _additionalImages,
+                                      );
 
-                          // Combine existing and new image URLs
-                          // This approach keeps existing images and adds new ones
-                          imgUrls.addAll(newImgUrls);
-                        }
+                                  // Combine existing and new image URLs
+                                  // This approach keeps existing images and adds new ones
+                                  imgUrls.addAll(newImgUrls);
+                                }
 
-                        // Create updated product object
-                        Product updatedProduct = Product(
-                          product_id: productId,
-                          productName: productName,
-                          sellerName: sellerName,
-                          category: category,
-                          price: price,
-                          pricePoints: pricePoints,
-                          freeShipping: freeShipping,
-                          instructions: instructions,
-                          stock: stock,
-                          baselineTime: baselineTime,
-                          meridiem: meridiem,
-                          imgUrl: imgUrl,
-                          imgUrls: imgUrls,
-                        );
+                                // Create updated product object
+                                Product updatedProduct = Product(
+                                  product_id: productId,
+                                  productName: productName,
+                                  sellerName: sellerName,
+                                  category: category,
+                                  price: price,
+                                  pricePoints: pricePoints,
+                                  freeShipping: freeShipping,
+                                  instructions: instructions,
+                                  stock: stock,
+                                  baselineTime: baselineTime,
+                                  meridiem: meridiem,
+                                  imgUrl: imgUrl,
+                                  imgUrls: imgUrls,
+                                );
 
-                        // Update in Firestore
-                        await _productService.updateProduct(updatedProduct);
+                                // Update in Firestore
+                                await _productService.updateProduct(
+                                  updatedProduct,
+                                );
 
-                        // Close loading dialog
-                        Navigator.of(context).pop();
+                                // Close loading dialog
+                                Navigator.of(context).pop();
 
-                        // Close form dialog
-                        Navigator.of(context).pop();
+                                // Close form dialog
+                                Navigator.of(context).pop();
 
-                        // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Product updated successfully'),
-                          ),
-                        );
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Product updated successfully',
+                                    ),
+                                  ),
+                                );
 
-                        // Clear selection
-                        _clearSelections();
-                      } catch (e) {
-                        // Close loading dialog
-                        Navigator.of(context).pop();
+                                // Clear selection
+                                _clearSelections();
+                              } catch (e) {
+                                // Close loading dialog
+                                Navigator.of(context).pop();
 
-                        // Show error message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
-                  },
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: ${e.toString()}'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                 ),
               ],
             );
@@ -1480,7 +1527,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
   // Delete Product confirmation
   void _deleteSelectedProducts() {
-    if (_selectedProductIds.isEmpty) return;
+    if (_selectedProducts.isEmpty) return;
 
     showDialog(
       context: context,
@@ -1488,9 +1535,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         return AlertDialog(
           title: Text('Confirm Delete'),
           content: Text(
-            _selectedProductIds.length == 1
+            _selectedProducts.length == 1
                 ? 'Are you sure you want to delete this product?'
-                : 'Are you sure you want to delete ${_selectedProductIds.length} products?',
+                : 'Are you sure you want to delete ${_selectedProducts.length} products?',
           ),
           actions: [
             TextButton(
@@ -1524,8 +1571,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
                 try {
                   // Delete each selected product
-                  for (String productId in _selectedProductIds) {
-                    await _productService.deleteProduct(productId);
+                  for (Product product in _selectedProducts) {
+                    await _productService.deleteProduct(product.product_id);
                   }
 
                   // Clear selections

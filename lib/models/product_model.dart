@@ -48,9 +48,9 @@ class Product {
     required this.pricePoints,
   });
 
-  factory Product.fromMap(Map<String, dynamic> map, String id) {
+  factory Product.fromMap(Map<String, dynamic> map) {
     return Product(
-      product_id: map['product_id'] ?? id,
+      product_id: map['product_id'],
       productName: map['productName'] ?? '',
       instructions: map['instructions'] ?? '',
       stock: map['stock'] ?? 0,

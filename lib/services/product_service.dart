@@ -16,7 +16,7 @@ class ProductService {
   Stream<List<Product>> getProducts() {
     return productsCollection.snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Product.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+        return Product.fromMap(doc.data() as Map<String, dynamic>);
       }).toList();
     });
   }
