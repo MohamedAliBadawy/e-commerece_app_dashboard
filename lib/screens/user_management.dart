@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
+import 'package:ecommerce_app_dashboard/screens/blocked_users.dart';
 import 'package:ecommerce_app_dashboard/screens/reported_users.dart';
 import 'package:ecommerce_app_dashboard/services/user_service.dart';
 import 'package:flutter/material.dart';
@@ -129,7 +130,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ),
               SizedBox(width: 16.w),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  if (widget.onSubPageRequested != null) {
+                    widget.onSubPageRequested!(BlockedUsersScreen());
+                  }
+                },
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey.shade300),

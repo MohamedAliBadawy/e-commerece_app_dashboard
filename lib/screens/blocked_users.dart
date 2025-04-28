@@ -4,14 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class ReportedUsersScreen extends StatefulWidget {
-  const ReportedUsersScreen({super.key});
+class BlockedUsersScreen extends StatefulWidget {
+  const BlockedUsersScreen({super.key});
 
   @override
-  State<ReportedUsersScreen> createState() => _ReportedUsersScreenState();
+  State<BlockedUsersScreen> createState() => _BlockedUsersScreenState();
 }
 
-class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
+class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
@@ -33,26 +33,26 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Reported Users',
+            'Blocked Users',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
           Flexible(
             child: StreamBuilder<QuerySnapshot>(
               stream:
-                  FirebaseFirestore.instance.collection('reports').snapshots(),
+                  FirebaseFirestore.instance.collection('blocks').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: Text('No reported users found'));
+                  return Center(child: Text('No blocked users found'));
                 }
-                final reportedUsers = snapshot.data!.docs;
+                final blockedUsers = snapshot.data!.docs;
                 return Padding(
                   padding: EdgeInsets.only(left: 70.w),
                   child: Text(
-                    '${reportedUsers.length}',
+                    '${blockedUsers.length}',
                     style: TextStyle(
                       fontSize: 50.sp,
                       fontWeight: FontWeight.bold,
@@ -85,28 +85,28 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
-                  FirebaseFirestore.instance.collection('reports').snapshots(),
+                  FirebaseFirestore.instance.collection('blocks').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: Text('No reported users found'));
+                  return Center(child: Text('No blocked users found'));
                 }
-                final reportedUsers = snapshot.data!.docs;
+                final blockedUsers = snapshot.data!.docs;
                 return ListView.builder(
-                  itemCount: reportedUsers.length,
+                  itemCount: blockedUsers.length,
                   itemBuilder: (context, index) {
-                    final report = reportedUsers[index];
+                    final block = blockedUsers[index];
                     return FutureBuilder(
                       future: Future.wait([
                         FirebaseFirestore.instance
                             .collection('users')
-                            .doc(report['reportedUserId'])
+                            .doc(block['blockedUserId'])
                             .get(),
                         FirebaseFirestore.instance
                             .collection('users')
-                            .doc(report['reportingUserId'])
+                            .doc(block['blockedBy'])
                             .get(),
                       ]),
                       builder: (context, snapshot) {
@@ -115,24 +115,24 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                           return Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No reported users found'));
+                          return Center(child: Text('No blocked users found'));
                         }
-                        final reportedUser = snapshot.data![0].data()!;
-                        final reportingUser = snapshot.data![1].data()!;
+                        final blockedUser = snapshot.data![0].data()!;
+                        final blockingUser = snapshot.data![1].data()!;
                         if (_searchQuery.isNotEmpty &&
-                            !(reportedUser['name']
+                            !(blockedUser['name']
                                     .toString()
                                     .toLowerCase()
                                     .contains(_searchQuery) ||
-                                reportedUser['userId']
+                                blockedUser['userId']
                                     .toString()
                                     .toLowerCase()
                                     .contains(_searchQuery) ||
-                                reportingUser['name']
+                                blockingUser['name']
                                     .toString()
                                     .toLowerCase()
                                     .contains(_searchQuery) ||
-                                reportingUser['userId']
+                                blockingUser['userId']
                                     .toString()
                                     .toLowerCase()
                                     .contains(_searchQuery))) {
@@ -159,20 +159,18 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                                     height: 55.h,
                                     decoration: ShapeDecoration(
                                       image: DecorationImage(
-                                        image: NetworkImage(
-                                          reportedUser['url'],
-                                        ),
+                                        image: NetworkImage(blockedUser['url']),
                                         fit: BoxFit.cover,
                                       ),
                                       shape: OvalBorder(),
                                     ),
                                   ),
-                                  subtitle: Text('${reportedUser['userId']}'),
-                                  title: Text('${reportedUser['name']}'),
+                                  subtitle: Text('${blockedUser['userId']}'),
+                                  title: Text('${blockedUser['name']}'),
                                 ),
                               ),
                               SizedBox(width: 16.w),
-                              Flexible(child: Text('Reported by')),
+                              Flexible(child: Text('Blocked by')),
                               SizedBox(width: 16.w),
                               Expanded(
                                 child: ListTile(
@@ -182,15 +180,15 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                                     decoration: ShapeDecoration(
                                       image: DecorationImage(
                                         image: NetworkImage(
-                                          reportingUser['url'],
+                                          blockingUser['url'],
                                         ),
                                         fit: BoxFit.cover,
                                       ),
                                       shape: OvalBorder(),
                                     ),
                                   ),
-                                  subtitle: Text('${reportingUser['userId']}'),
-                                  title: Text('${reportingUser['name']}'),
+                                  subtitle: Text('${blockingUser['userId']}'),
+                                  title: Text('${blockingUser['name']}'),
                                 ),
                               ),
                             ],
