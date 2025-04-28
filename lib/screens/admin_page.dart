@@ -1,4 +1,6 @@
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
+import 'package:ecommerce_app_dashboard/screens/reported_users.dart';
+import 'package:ecommerce_app_dashboard/screens/user_management.dart';
 import 'package:flutter/material.dart';
 import 'product_management.dart';
 
@@ -8,19 +10,25 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
-  int _selectedIndex = 1; // Default to Product Management
-
-  final List<Widget> _pages = [
-    ProductManagementScreen(),
-    ProductManagementScreen(),
-    ProductManagementScreen(),
-    ProductManagementScreen(),
-    ProductManagementScreen(),
-    CategoryManagementScreen(),
-  ];
+  int _selectedIndex = 0;
+  Widget? _currentSubPage;
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      UserManagementScreen(
+        onSubPageRequested: (subPage) {
+          setState(() {
+            _currentSubPage = subPage;
+          });
+        },
+      ),
+      ProductManagementScreen(),
+      ProductManagementScreen(),
+      ProductManagementScreen(),
+      ProductManagementScreen(),
+      CategoryManagementScreen(),
+    ];
     return Scaffold(
       appBar: AppBar(
         title: Text('Admin Page'),
@@ -30,7 +38,9 @@ class _AdminPageState extends State<AdminPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Handle back navigation
+            setState(() {
+              _currentSubPage = null;
+            });
           },
         ),
       ),
@@ -45,38 +55,62 @@ class _AdminPageState extends State<AdminPage> {
                 SidebarItem(
                   title: 'User Management',
                   isSelected: _selectedIndex == 0,
-                  onTap: () => setState(() => _selectedIndex = 0),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 0;
+                        _currentSubPage = null;
+                      }),
                 ),
                 SidebarItem(
                   title: 'Delivery Manager Management',
                   isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 1;
+                        _currentSubPage = null;
+                      }),
                 ),
                 SidebarItem(
                   title: 'Order Management',
                   isSelected: _selectedIndex == 2,
-                  onTap: () => setState(() => _selectedIndex = 2),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 2;
+                        _currentSubPage = null;
+                      }),
                 ),
                 SidebarItem(
                   title: 'Post Management',
                   isSelected: _selectedIndex == 3,
-                  onTap: () => setState(() => _selectedIndex = 3),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 3;
+                        _currentSubPage = null;
+                      }),
                 ),
                 SidebarItem(
                   title: 'Product Management',
                   isSelected: _selectedIndex == 4,
-                  onTap: () => setState(() => _selectedIndex = 4),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 4;
+                        _currentSubPage = null;
+                      }),
                 ),
                 SidebarItem(
                   title: 'Category Management',
                   isSelected: _selectedIndex == 5,
-                  onTap: () => setState(() => _selectedIndex = 5),
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 5;
+                        _currentSubPage = null;
+                      }),
                 ),
               ],
             ),
           ),
           // Main content
-          Expanded(child: _pages[_selectedIndex]),
+          Expanded(child: _currentSubPage ?? _pages[_selectedIndex]),
         ],
       ),
     );

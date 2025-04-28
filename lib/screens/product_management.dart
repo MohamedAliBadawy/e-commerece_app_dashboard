@@ -1550,8 +1550,6 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               child: Text('Delete'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
-                Navigator.of(context).pop();
-
                 // Show loading indicator
                 showDialog(
                   context: context,
@@ -1579,6 +1577,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   _clearSelections();
 
                   // Close loading dialog
+                  Navigator.of(context).pop();
                   Navigator.of(context).pop();
 
                   // Show success message
