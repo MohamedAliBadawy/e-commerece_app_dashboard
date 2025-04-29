@@ -1,4 +1,5 @@
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
+import 'package:ecommerce_app_dashboard/screens/delivery_manager_management.dart';
 import 'package:ecommerce_app_dashboard/screens/post_management.dart';
 import 'package:ecommerce_app_dashboard/screens/reported_users.dart';
 import 'package:ecommerce_app_dashboard/screens/user_management.dart';
@@ -24,7 +25,7 @@ class _AdminPageState extends State<AdminPage> {
           });
         },
       ),
-      ProductManagementScreen(),
+      DeliveryManagerManagementScreen(),
       ProductManagementScreen(),
       PostManagementScreen(),
       ProductManagementScreen(),
