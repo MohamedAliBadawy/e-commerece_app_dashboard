@@ -1,4 +1,5 @@
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
+import 'package:ecommerce_app_dashboard/screens/post_management.dart';
 import 'package:ecommerce_app_dashboard/screens/reported_users.dart';
 import 'package:ecommerce_app_dashboard/screens/user_management.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ class _AdminPageState extends State<AdminPage> {
       ),
       ProductManagementScreen(),
       ProductManagementScreen(),
-      ProductManagementScreen(),
+      PostManagementScreen(),
       ProductManagementScreen(),
       CategoryManagementScreen(),
     ];
