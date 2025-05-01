@@ -1,11 +1,6 @@
-// screens/category_management.dart
-import 'dart:async';
-import 'dart:typed_data';
-
 import 'package:ecommerce_app_dashboard/models/category_model.dart';
 import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
@@ -445,73 +440,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  void _showDeleteCategoryDialog(BuildContext context, Category category) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text(
-            'Are you sure you want to delete the category "${category.name}"?',
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text('Delete'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () async {
-                Navigator.of(context).pop();
-
-                // Show loading indicator
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      content: Row(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(width: 16),
-                          Text("Deleting category..."),
-                        ],
-                      ),
-                    );
-                  },
-                );
-
-                try {
-                  print(category.id);
-                  await _categoryService.deleteCategory(category.id);
-
-                  // Close loading dialog
-                  Navigator.of(context).pop();
-
-                  // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category deleted successfully')),
-                  );
-                } catch (e) {
-                  // Close loading dialog
-                  Navigator.of(context).pop();
-
-                  // Show error message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${e.toString()}')),
-                  );
-                }
-              },
-            ),
-          ],
         );
       },
     );

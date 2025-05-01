@@ -16,8 +16,6 @@ class PostManagementScreen extends StatefulWidget {
 class _PostManagementScreenState extends State<PostManagementScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  List<Post> _posts = [];
-  List<Post> _filteredPosts = [];
   final List<Post> _selectedPosts = [];
   Timer? _debounce;
 

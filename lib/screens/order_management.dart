@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
 import 'package:ecommerce_app_dashboard/models/order_model.dart';
 import 'package:ecommerce_app_dashboard/models/product_model.dart';
-import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:ecommerce_app_dashboard/services/order_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,12 +16,38 @@ class OrderManagementScreen extends StatefulWidget {
 }
 
 class _OrderManagementScreenState extends State<OrderManagementScreen> {
-  final OrderService _orderService = OrderService();
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 16),
+                    Text('Loading...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+    );
+  }
 
   String _searchQuery = '';
+  final OrderService _orderService = OrderService();
   final TextEditingController _searchController = TextEditingController();
-  List<MyOrder> _orders = [];
-  List<MyOrder> _filteredOrders = [];
   final List<MyOrder> _selectedOrders = [];
   Timer? _debounce;
   Map<String, String?> selectedManagerNames = {}; // orderId -> managerName
@@ -37,26 +62,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           .where('orderId', isLessThan: query + 'z')
           .snapshots();
     }
-  }
-
-  void _selectOrder(MyOrder order) {
-    setState(() {
-      if (!_selectedOrders.any((p) => p.orderId == order.orderId)) {
-        _selectedOrders.add(order);
-      }
-    });
-  }
-
-  void _clearSelections() {
-    setState(() {
-      _selectedOrders.clear();
-    });
-  }
-
-  void _deselectOrder(MyOrder order) {
-    setState(() {
-      _selectedOrders.removeWhere((p) => p.orderId == order.orderId);
-    });
   }
 
   void _onSearchChanged(String query) {
@@ -195,8 +200,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       (p) => p.orderId == order.orderId,
     );
 
-    String? selectedManagerName;
-
     return FutureBuilder(
       future: Future.wait([
         FirebaseFirestore.instance.collection('deliveryManagers').get(),
@@ -212,8 +215,18 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         final querySnapshot = snapshot.data![0] as QuerySnapshot;
         final deliveryManagers = querySnapshot.docs;
 
-        final List<String> deliveryManagerNames =
-            deliveryManagers.map((doc) => doc['name'] as String).toList();
+        final List<DeliveryManager> deliveryManagerNames =
+            deliveryManagers
+                .map(
+                  (doc) => DeliveryManager.fromDocument(
+                    (doc as DocumentSnapshot).data() as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+        if (order.deliveryManagerId.isNotEmpty &&
+            selectedManagerNames[order.orderId] == null) {
+          selectedManagerNames[order.orderId] = order.deliveryManagerId!;
+        }
         final product = Product.fromMap(
           (snapshot.data![1] as DocumentSnapshot).data()
               as Map<String, dynamic>,
@@ -266,8 +279,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   items:
                       deliveryManagerNames.map((name) {
                         return DropdownMenuItem<String>(
-                          value: name,
-                          child: Text(name),
+                          value: name.userId,
+                          child: Text(name.name),
                         );
                       }).toList(),
                   onChanged: (String? newValue) {
@@ -299,7 +312,28 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ),
               ),
               Expanded(
-                child: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+                child: IconButton(
+                  onPressed: () async {
+                    _showLoadingDialog(context);
+                    order.deliveryManagerId =
+                        selectedManagerNames[order.orderId]!;
+                    order.deliveryManager =
+                        deliveryManagerNames
+                            .firstWhere(
+                              (name) =>
+                                  name.userId ==
+                                  selectedManagerNames[order.orderId]!,
+                            )
+                            .name;
+                    await _orderService.updateOrder(order);
+
+                    Navigator.of(context, rootNavigator: true).pop();
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Done')));
+                  },
+                  icon: Icon(Icons.edit),
+                ),
               ),
             ],
           ),

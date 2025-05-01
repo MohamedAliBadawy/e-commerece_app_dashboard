@@ -21,8 +21,6 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final ProductService _productService = ProductService();
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _products = [];
-  List<Product> _filteredProducts = [];
   final List<Product> _selectedProducts = [];
   Timer? _debounce;
 

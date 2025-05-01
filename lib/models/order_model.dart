@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class MyOrder {
@@ -16,7 +15,8 @@ class MyOrder {
   List<dynamic> trackingEvents;
   String trackingNumber;
   String userId;
-
+  String deliveryManagerId;
+  String deliveryManager;
   MyOrder({
     required this.orderId,
     required this.userId,
@@ -32,6 +32,8 @@ class MyOrder {
     required this.orderDate,
     required this.trackingEvents,
     required this.trackingNumber,
+    required this.deliveryManagerId,
+    required this.deliveryManager,
   });
 
   Map<String, Object?> toDocument() {
@@ -50,6 +52,8 @@ class MyOrder {
       'orderDate': orderDate,
       'trackingEvents': trackingEvents,
       'trackingNumber': trackingNumber,
+      'deliveryManagerId': deliveryManagerId,
+      'deliveryManager': deliveryManager,
     };
   }
 
@@ -69,13 +73,13 @@ class MyOrder {
       orderDate: doc['orderDate'],
       trackingEvents: doc['trackingEvents'],
       trackingNumber: doc['trackingNumber'],
+      deliveryManagerId: doc['deliveryManagerId'],
+      deliveryManager: doc['deliveryManager'],
     );
   }
 
   String get formattedOrderDate {
-    final formatter = DateFormat(
-      'MM/dd/yyyy, hh:mm a',
-    ); // Customize format as needed
+    final formatter = DateFormat('MM/dd/yyyy, hh:mm a');
     return formatter.format(DateTime.parse(orderDate));
   }
 }

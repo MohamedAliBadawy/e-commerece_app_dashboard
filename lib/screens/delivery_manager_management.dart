@@ -21,8 +21,7 @@ class _DeliveryManagerManagementScreenState
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  List<DeliveryManager> _deliveryManagers = [];
-  List<DeliveryManager> _filteredDeliveryManagers = [];
+
   final List<DeliveryManager> _selectedDeliveryManagers = [];
   Timer? _debounce;
 

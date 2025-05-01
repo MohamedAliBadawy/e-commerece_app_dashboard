@@ -21,8 +21,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final UserService _userService = UserService();
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  List<User> _users = [];
-  List<User> _filteredUsers = [];
   final List<User> _selectedUsers = [];
   Timer? _debounce;
 
