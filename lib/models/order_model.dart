@@ -12,7 +12,6 @@ class MyOrder {
   int quantity;
   double totalPrice;
   String orderDate;
-  List<dynamic> trackingEvents;
   String trackingNumber;
   String userId;
   String deliveryManagerId;
@@ -30,7 +29,6 @@ class MyOrder {
     required this.quantity,
     required this.totalPrice,
     required this.orderDate,
-    required this.trackingEvents,
     required this.trackingNumber,
     required this.deliveryManagerId,
     required this.deliveryManager,
@@ -50,7 +48,6 @@ class MyOrder {
       'quantity': quantity,
       'totalPrice': totalPrice,
       'orderDate': orderDate,
-      'trackingEvents': trackingEvents,
       'trackingNumber': trackingNumber,
       'deliveryManagerId': deliveryManagerId,
       'deliveryManager': deliveryManager,
@@ -71,7 +68,6 @@ class MyOrder {
       quantity: doc['quantity'] ?? 0,
       totalPrice: doc['totalPrice'] ?? 0.0,
       orderDate: doc['orderDate'] ?? '',
-      trackingEvents: doc['trackingEvents'] ?? [],
       trackingNumber: doc['trackingNumber'] ?? '',
       deliveryManagerId: doc['deliveryManagerId'] ?? '',
       deliveryManager: doc['deliveryManager'] ?? '',

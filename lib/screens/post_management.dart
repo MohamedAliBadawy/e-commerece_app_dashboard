@@ -75,7 +75,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Post Management',
+            '게시글 관리',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -91,7 +91,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search',
+                        hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -116,7 +116,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                   foregroundColor:
                       _selectedPosts.isNotEmpty ? Colors.red : Colors.grey,
                 ),
-                child: Text('Delete'),
+                child: Text('삭제'),
               ),
             ],
           ),
@@ -137,11 +137,11 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildTableHeader('Image', 1),
-                        _buildTableHeader('Text', 1),
-                        _buildTableHeader('User', 1),
-                        _buildTableHeader('Date', 1),
-                        _buildTableHeader('', 1),
+                        _buildTableHeader('이미지', 1),
+                        _buildTableHeader('내용', 1),
+                        _buildTableHeader('사용자', 1),
+                        _buildTableHeader('날짜', 1),
+                        _buildTableHeader('선택', 1),
                       ],
                     ),
                   ),
@@ -158,12 +158,12 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                         }
                         // 3. Check for null data
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No posts available'));
+                          return Center(child: Text('게시글이 없습니다'));
                         }
                         final posts = snapshot.data!.docs;
 
                         if (posts.isEmpty) {
-                          return Center(child: Text('No posts found'));
+                          return Center(child: Text('게시글이 없습니다'));
                         }
                         return ListView.builder(
                           itemCount: posts.length,
@@ -256,7 +256,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                           if (!snapshot.hasData ||
                                               snapshot.data == null) {
                                             return Center(
-                                              child: Text('No user found'),
+                                              child: Text('유저를 찾을 수 없습니다'),
                                             );
                                           }
                                           final user = User.fromDocument(
@@ -329,21 +329,21 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
+          title: Text('게시글 삭제'),
           content: Text(
             _selectedPosts.length == 1
-                ? 'Are you sure you want to delete this post?'
-                : 'Are you sure you want to delete ${_selectedPosts.length} posts?',
+                ? '게시글을 삭제하시겠습니까?'
+                : '${_selectedPosts.length}개의 게시글을 삭제하시겠습니까?',
           ),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: Text('취소'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: Text('삭제'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 // Show loading indicator
@@ -356,7 +356,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(width: 16),
-                          Text("Deleting users..."),
+                          Text("게시글 삭제중..."),
                         ],
                       ),
                     );
@@ -380,9 +380,9 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
 
                   // Close loading dialog
                   // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Users deleted successfully')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('게시글이 삭제되었습니다')));
                 } catch (e) {
                   // Close loading dialog
                   Navigator.of(context).pop();

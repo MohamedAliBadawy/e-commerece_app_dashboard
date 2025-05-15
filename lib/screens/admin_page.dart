@@ -1,6 +1,7 @@
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
 import 'package:ecommerce_app_dashboard/screens/delivery_manager_management.dart';
 import 'package:ecommerce_app_dashboard/screens/order_management.dart';
+import 'package:ecommerce_app_dashboard/screens/placeholder_editor_screen.dart';
 import 'package:ecommerce_app_dashboard/screens/post_management.dart';
 import 'package:ecommerce_app_dashboard/screens/user_management.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +31,11 @@ class _AdminPageState extends State<AdminPage> {
       PostManagementScreen(),
       ProductManagementScreen(),
       CategoryManagementScreen(),
+      PlaceholderEditorScreen(),
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text('Admin Page'),
+        title: Text('관리자 페이지'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -55,7 +57,7 @@ class _AdminPageState extends State<AdminPage> {
             child: ListView(
               children: [
                 SidebarItem(
-                  title: 'User Management',
+                  title: '사용자 관리',
                   isSelected: _selectedIndex == 0,
                   onTap:
                       () => setState(() {
@@ -64,7 +66,7 @@ class _AdminPageState extends State<AdminPage> {
                       }),
                 ),
                 SidebarItem(
-                  title: 'Delivery Manager Management',
+                  title: '배송 관리자 관리',
                   isSelected: _selectedIndex == 1,
                   onTap:
                       () => setState(() {
@@ -73,7 +75,7 @@ class _AdminPageState extends State<AdminPage> {
                       }),
                 ),
                 SidebarItem(
-                  title: 'Order Management',
+                  title: '주문 관리',
                   isSelected: _selectedIndex == 2,
                   onTap:
                       () => setState(() {
@@ -82,7 +84,7 @@ class _AdminPageState extends State<AdminPage> {
                       }),
                 ),
                 SidebarItem(
-                  title: 'Post Management',
+                  title: '게시물 관리',
                   isSelected: _selectedIndex == 3,
                   onTap:
                       () => setState(() {
@@ -91,7 +93,7 @@ class _AdminPageState extends State<AdminPage> {
                       }),
                 ),
                 SidebarItem(
-                  title: 'Product Management',
+                  title: '상품 관리',
                   isSelected: _selectedIndex == 4,
                   onTap:
                       () => setState(() {
@@ -100,11 +102,20 @@ class _AdminPageState extends State<AdminPage> {
                       }),
                 ),
                 SidebarItem(
-                  title: 'Category Management',
+                  title: '카테고리 관리',
                   isSelected: _selectedIndex == 5,
                   onTap:
                       () => setState(() {
                         _selectedIndex = 5;
+                        _currentSubPage = null;
+                      }),
+                ),
+                SidebarItem(
+                  title: '플레이스홀더 편집',
+                  isSelected: _selectedIndex == 6,
+                  onTap:
+                      () => setState(() {
+                        _selectedIndex = 6;
                         _currentSubPage = null;
                       }),
                 ),

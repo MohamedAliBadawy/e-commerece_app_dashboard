@@ -33,7 +33,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Blocked Users',
+            '차단된 사용자',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -46,7 +46,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: Text('No blocked users found'));
+                  return Center(child: Text('차단된 사용자가 없습니다'));
                 }
                 final blockedUsers = snapshot.data!.docs;
                 return Padding(
@@ -72,7 +72,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search',
+                  hintText: '검색',
                   prefixIcon: Icon(Icons.search),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -91,7 +91,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: Text('No blocked users found'));
+                  return Center(child: Text('차단된 사용자가 없습니다'));
                 }
                 final blockedUsers = snapshot.data!.docs;
                 return ListView.builder(
@@ -115,7 +115,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                           return Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No blocked users found'));
+                          return Center(child: Text('차단된 사용자가 없습니다'));
                         }
                         final blockedUser = snapshot.data![0].data()!;
                         final blockingUser = snapshot.data![1].data()!;

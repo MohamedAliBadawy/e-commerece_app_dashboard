@@ -3,7 +3,9 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/category_model.dart';
+import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
 import 'package:ecommerce_app_dashboard/services/category_service.dart';
+import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,7 +85,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Product Management',
+            '상품 관리',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -99,7 +101,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search',
+                        hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -112,7 +114,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               SizedBox(width: 16),
               ElevatedButton.icon(
                 icon: Icon(Icons.add),
-                label: Text('Add Product'),
+                label: Text('상품 추가'),
                 onPressed: () => _showAddProductDialog(context),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -132,7 +134,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           _selectedProducts.first,
                         )
                         : null, // Disable if not exactly one product selected
-                child: Text('Edit'),
+                child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedProducts.length == 1 ? Colors.blue : Colors.grey,
@@ -144,7 +146,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     _selectedProducts.isNotEmpty
                         ? () => _deleteSelectedProducts()
                         : null, // Disable if no products selected
-                child: Text('Delete'),
+                child: Text('삭제'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedProducts.isNotEmpty ? Colors.red : Colors.grey,
@@ -170,14 +172,14 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildTableHeader('Image', 1),
-                        _buildTableHeader('Product name', 2),
-                        _buildTableHeader('Descriptions', 2),
-                        _buildTableHeader('Stock', 1),
-                        _buildTableHeader('Baseline time', 1),
-                        _buildTableHeader('Seller', 1),
-                        _buildTableHeader('Price', 1),
-                        _buildTableHeader('', 1),
+                        _buildTableHeader('이미지', 1),
+                        _buildTableHeader('상품명', 2),
+                        _buildTableHeader('상품 설명', 2),
+                        _buildTableHeader('재고', 1),
+                        _buildTableHeader('기준 시간', 1),
+                        _buildTableHeader('판매자', 1),
+                        _buildTableHeader('가격', 1),
+                        _buildTableHeader('선택', 1),
                       ],
                     ),
                   ),
@@ -341,6 +343,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     // For categories
     List<Category> categories = [];
     bool isLoadingCategories = true;
+    bool isLoadingDeliveryManagers = true;
+    List<DeliveryManager> deliveryManagers = [];
     int price = 0;
     bool freeShipping = true;
     String instructions = '';
@@ -350,6 +354,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String? imgUrl;
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
+    String deliveryManagerId = '';
 
     bool _imagesLoading = false;
 
@@ -385,6 +390,29 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     print('Error loading categories: $error');
                     setDialogState(() {
                       isLoadingCategories = false;
+                    });
+                  });
+            }
+
+            // Load delivery managers when dialog opens
+            if (isLoadingDeliveryManagers) {
+              DeliveryManagerService()
+                  .getDeliveryManagersOnce()
+                  .then((loadedDeliveryManagers) {
+                    setDialogState(() {
+                      deliveryManagers = loadedDeliveryManagers;
+                      isLoadingDeliveryManagers = false;
+                      // Set default delivery manager if available
+                      if (deliveryManagers.isNotEmpty &&
+                          deliveryManagerId.isEmpty) {
+                        deliveryManagerId = deliveryManagers.first.userId;
+                      }
+                    });
+                  })
+                  .catchError((error) {
+                    print('Error loading delivery managers: $error');
+                    setDialogState(() {
+                      isLoadingDeliveryManagers = false;
                     });
                   });
             }
@@ -470,7 +498,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             }
 
             return AlertDialog(
-              title: Text('Add New Product'),
+              title: Text('상품 추가'),
               content: Container(
                 width: 600,
                 child: Form(
@@ -483,12 +511,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(
-                                  labelText: 'Product Name',
-                                ),
+                                decoration: InputDecoration(labelText: '상품명'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter product name';
+                                    return '상품명을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -500,12 +526,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             SizedBox(width: 16),
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(
-                                  labelText: 'Seller Name',
-                                ),
+                                decoration: InputDecoration(labelText: '판매자명'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter seller name';
+                                    return '판매자명을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -550,7 +574,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Quantity-Based Pricing',
+                                    '수량-가격',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -574,7 +598,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                     pricePoints[index].quantity
                                                         .toString(),
                                                 decoration: InputDecoration(
-                                                  labelText: 'Quantity',
+                                                  labelText: '수량',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
@@ -595,7 +619,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                     pricePoints[index].price
                                                         .toString(),
                                                 decoration: InputDecoration(
-                                                  labelText: 'Price',
+                                                  labelText: '가격',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
@@ -628,7 +652,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   ),
                                   ElevatedButton.icon(
                                     icon: Icon(Icons.add),
-                                    label: Text('Add Price Point'),
+                                    label: Text('수량-가격 옵션 추가'),
                                     onPressed: () {
                                       setDialogState(() {
                                         pricePoints.add(
@@ -652,15 +676,42 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           ],
                         ),
                         SizedBox(height: 16),
+                        isLoadingDeliveryManagers
+                            ? Center(child: CircularProgressIndicator())
+                            : Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: deliveryManagerId,
+                                    decoration: InputDecoration(
+                                      labelText: '판매자',
+                                    ),
+                                    items:
+                                        deliveryManagers.map((dm) {
+                                          return DropdownMenuItem(
+                                            value: dm.userId,
+                                            child: Text(dm.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        deliveryManagerId = value!;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                        SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(labelText: 'Stock'),
+                                decoration: InputDecoration(labelText: '재고'),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter stock';
+                                    return '재고를 입력하세요';
                                   }
                                   return null;
                                 },
@@ -676,8 +727,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       decoration: InputDecoration(
-                                        labelText: 'Baseline Time',
-                                        hintText: 'Enter 1-12',
+                                        labelText: '기준 시간',
+                                        hintText: '1-12 사이 입력',
                                       ),
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [
@@ -689,16 +740,16 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       ],
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Please enter time';
+                                          return '시간을 입력하세요';
                                         }
 
                                         final number = int.tryParse(value);
                                         if (number == null) {
-                                          return 'Please enter a valid number';
+                                          return '유효한 숫자를 입력하세요';
                                         }
 
                                         if (number < 1 || number > 12) {
-                                          return 'Please enter between 1 and 12';
+                                          return '1-12 사이의 숫자를 입력하세요';
                                         }
 
                                         return null;
@@ -731,13 +782,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         ),
                         SizedBox(height: 16),
                         TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Instructions',
-                          ),
+                          decoration: InputDecoration(labelText: '설명 추가'),
                           maxLines: 3,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter instructions';
+                              return '설명을 입력하세요';
                             }
                             return null;
                           },
@@ -752,7 +801,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Main Image'),
+                                  Text('메인 이미지'),
                                   SizedBox(height: 8),
                                   InkWell(
                                     onTap: _pickMainImage,
@@ -781,7 +830,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Additional Images'),
+                                  Text('추가 이미지'),
                                   SizedBox(height: 8),
                                   InkWell(
                                     onTap: _pickAdditionalImages,
@@ -819,13 +868,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel'),
+                  child: Text('취소'),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  child: Text('Save'),
+                  child: Text('저장'),
                   onPressed:
                       _imagesLoading
                           ? null
@@ -843,7 +892,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       children: [
                                         CircularProgressIndicator(),
                                         SizedBox(width: 16),
-                                        Text("Saving product..."),
+                                        Text("상품 등록중..."),
                                       ],
                                     ),
                                   );
@@ -878,6 +927,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   meridiem: meridiem,
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
+                                  deliveryManagerId: deliveryManagerId,
                                 );
 
                                 // Save to Firestore
@@ -891,9 +941,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
                                 // Show success message
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Product added successfully'),
-                                  ),
+                                  SnackBar(content: Text('상품이 성공적으로 등록되었습니다')),
                                 );
                               } catch (e) {
                                 // Close loading dialog
@@ -929,9 +977,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     // For categories
     List<Category> categories = [];
     bool isLoadingCategories = true;
+    bool isLoadingDeliveryManagers = true;
+    List<DeliveryManager> deliveryManagers = [];
     int price = product.price;
     List<PricePoint> pricePoints = product.pricePoints;
-
+    String? deliveryManagerId = product.deliveryManagerId;
     bool freeShipping = product.freeShipping;
     String instructions = product.instructions;
     int stock = product.stock;
@@ -991,6 +1041,29 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     print('Error loading categories: $error');
                     setDialogState(() {
                       isLoadingCategories = false;
+                    });
+                  });
+            }
+
+            // Load delivery managers when dialog opens
+            if (isLoadingDeliveryManagers) {
+              DeliveryManagerService()
+                  .getDeliveryManagersOnce()
+                  .then((loadedDeliveryManagers) {
+                    setDialogState(() {
+                      deliveryManagers = loadedDeliveryManagers;
+                      isLoadingDeliveryManagers = false;
+                      // Set default delivery manager if available
+                      if (deliveryManagers.isNotEmpty &&
+                          deliveryManagerId == null) {
+                        deliveryManagerId = deliveryManagers.first.userId;
+                      }
+                    });
+                  })
+                  .catchError((error) {
+                    print('Error loading delivery managers: $error');
+                    setDialogState(() {
+                      isLoadingDeliveryManagers = false;
                     });
                   });
             }
@@ -1090,12 +1163,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             Expanded(
                               child: TextFormField(
                                 initialValue: productName,
-                                decoration: InputDecoration(
-                                  labelText: 'Product Name',
-                                ),
+                                decoration: InputDecoration(labelText: '상품명'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter product name';
+                                    return '상품명을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -1108,12 +1179,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             Expanded(
                               child: TextFormField(
                                 initialValue: sellerName,
-                                decoration: InputDecoration(
-                                  labelText: 'Seller Name',
-                                ),
+                                decoration: InputDecoration(labelText: '판매자명'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter seller name';
+                                    return '판매자명을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -1157,7 +1226,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Quantity-Based Pricing',
+                                    '수량-가격',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1181,7 +1250,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                     pricePoints[index].quantity
                                                         .toString(),
                                                 decoration: InputDecoration(
-                                                  labelText: 'Quantity',
+                                                  labelText: '수량',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
@@ -1202,7 +1271,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                     pricePoints[index].price
                                                         .toString(),
                                                 decoration: InputDecoration(
-                                                  labelText: 'Price',
+                                                  labelText: '가격',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
@@ -1235,7 +1304,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   ),
                                   ElevatedButton.icon(
                                     icon: Icon(Icons.add),
-                                    label: Text('Add Price Point'),
+                                    label: Text('수량-가격 옵션 추가'),
                                     onPressed: () {
                                       setDialogState(() {
                                         pricePoints.add(
@@ -1259,16 +1328,43 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           ],
                         ),
                         SizedBox(height: 16),
+                        isLoadingDeliveryManagers
+                            ? Center(child: CircularProgressIndicator())
+                            : Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: deliveryManagerId,
+                                    decoration: InputDecoration(
+                                      labelText: '판매자',
+                                    ),
+                                    items:
+                                        deliveryManagers.map((dm) {
+                                          return DropdownMenuItem(
+                                            value: dm.userId,
+                                            child: Text(dm.name),
+                                          );
+                                        }).toList(),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        deliveryManagerId = value!;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                        SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: TextFormField(
                                 initialValue: stock.toString(),
-                                decoration: InputDecoration(labelText: 'Stock'),
+                                decoration: InputDecoration(labelText: '재고'),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter stock';
+                                    return '재고를 입력하세요';
                                   }
                                   return null;
                                 },
@@ -1285,12 +1381,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     child: TextFormField(
                                       initialValue: baselineTime.toString(),
                                       decoration: InputDecoration(
-                                        labelText: 'Baseline Time',
+                                        labelText: '기준 시간',
                                       ),
                                       keyboardType: TextInputType.number,
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Please enter time';
+                                          return '기준 시간을 입력하세요';
                                         }
                                         return null;
                                       },
@@ -1324,13 +1420,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         SizedBox(height: 16),
                         TextFormField(
                           initialValue: instructions,
-                          decoration: InputDecoration(
-                            labelText: 'Instructions',
-                          ),
+                          decoration: InputDecoration(labelText: '설명 추가'),
                           maxLines: 3,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter instructions';
+                              return '설명을 입력하세요';
                             }
                             return null;
                           },
@@ -1345,7 +1439,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Main Image'),
+                                  Text('메인 이미지'),
                                   SizedBox(height: 8),
                                   InkWell(
                                     onTap: _pickMainImage,
@@ -1374,7 +1468,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Additional Images'),
+                                  Text('추가 이미지'),
                                   SizedBox(height: 8),
                                   InkWell(
                                     onTap: _pickAdditionalImages,
@@ -1412,13 +1506,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel'),
+                  child: Text('취소'),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  child: Text('Save Changes'),
+                  child: Text('저장'),
                   onPressed:
                       _imagesLoading
                           ? null
@@ -1436,7 +1530,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       children: [
                                         CircularProgressIndicator(),
                                         SizedBox(width: 16),
-                                        Text("Updating product..."),
+                                        Text("상품 등록중..."),
                                       ],
                                     ),
                                   );
@@ -1477,6 +1571,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   meridiem: meridiem,
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
+                                  deliveryManagerId: deliveryManagerId,
                                 );
 
                                 // Update in Firestore
@@ -1493,9 +1588,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 // Show success message
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      'Product updated successfully',
-                                    ),
+                                    content: Text('상품 수정이 성공적으로 완료되었습니다'),
                                   ),
                                 );
 
@@ -1531,21 +1624,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
+          title: Text('삭제 확인'),
           content: Text(
             _selectedProducts.length == 1
-                ? 'Are you sure you want to delete this product?'
-                : 'Are you sure you want to delete ${_selectedProducts.length} products?',
+                ? '삭제하시겠습니까?'
+                : '${_selectedProducts.length}개의 상품을 삭제하시겠습니까?',
           ),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: Text('취소'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: Text('삭제'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 // Show loading indicator
@@ -1558,7 +1651,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(width: 16),
-                          Text("Deleting products..."),
+                          Text("상품 삭제중..."),
                         ],
                       ),
                     );
@@ -1579,9 +1672,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   Navigator.of(context).pop();
 
                   // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Products deleted successfully')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('상품을 성공적으로 삭제했습니다')));
                 } catch (e) {
                   // Close loading dialog
                   Navigator.of(context).pop();

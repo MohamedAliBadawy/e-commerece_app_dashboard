@@ -31,6 +31,7 @@ class Product {
   final String meridiem;
   final String? imgUrl;
   final List<String?> imgUrls;
+  final String? deliveryManagerId;
 
   Product({
     required this.product_id,
@@ -46,6 +47,7 @@ class Product {
     required this.imgUrl,
     required this.imgUrls,
     required this.pricePoints,
+    required this.deliveryManagerId,
   });
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -72,6 +74,7 @@ class Product {
               .toList() ??
           [],
       freeShipping: map['freeShipping'] ?? false,
+      deliveryManagerId: map['deliveryManagerId'] ?? '',
     );
   }
 
@@ -90,6 +93,7 @@ class Product {
       'category': category,
       'freeShipping': freeShipping,
       'pricePoints': pricePoints.map((pp) => pp.toMap()).toList(),
+      'deliveryManagerId': deliveryManagerId,
     };
   }
 }

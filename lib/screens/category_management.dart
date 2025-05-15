@@ -83,7 +83,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Category Management',
+            '카테고리 관리',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -98,7 +98,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Search Categories',
+                      hintText: '검색',
                       prefixIcon: Icon(Icons.search),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -110,7 +110,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               SizedBox(width: 16),
               ElevatedButton.icon(
                 icon: Icon(Icons.add),
-                label: Text('Add Category'),
+                label: Text('카테고리 추가'),
                 onPressed: () => _showAddCategoryDialog(context),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -130,7 +130,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           _selectedCategories.first,
                         )
                         : null,
-                child: Text('Edit'),
+                child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedCategoryIds.length == 1
@@ -144,7 +144,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     _selectedCategoryIds.isNotEmpty
                         ? () => _deleteSelectedCategories()
                         : null,
-                child: Text('Delete'),
+                child: Text('삭제'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedCategoryIds.isNotEmpty
@@ -172,7 +172,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildTableHeader('Category Name', 3),
+                        _buildTableHeader('카테고리', 3),
                         _buildTableHeader('', 1),
                       ],
                     ),
@@ -251,17 +251,17 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Add New Category'),
+              title: Text('카테고리 추가'),
               content: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'Category Name'),
+                      decoration: InputDecoration(labelText: '카테고리'),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter category name';
+                          return '카테고리명을 입력하세요';
                         }
                         return null;
                       },

@@ -87,7 +87,7 @@ class _DeliveryManagerManagementScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Delivery Manager Management',
+            '배송 관리자 관리',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -103,7 +103,7 @@ class _DeliveryManagerManagementScreenState
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search',
+                        hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -116,7 +116,7 @@ class _DeliveryManagerManagementScreenState
               SizedBox(width: 16),
               ElevatedButton.icon(
                 icon: Icon(Icons.add),
-                label: Text('Add Delivery Manager'),
+                label: Text('관리자 추가'),
                 onPressed: () => _showAddDeliveryManagerDialog(context),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -136,7 +136,7 @@ class _DeliveryManagerManagementScreenState
                           _selectedDeliveryManagers.first,
                         )
                         : null, // Disable if not exactly one product selected
-                child: Text('Edit'),
+                child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedDeliveryManagers.length == 1
@@ -150,7 +150,7 @@ class _DeliveryManagerManagementScreenState
                     _selectedDeliveryManagers.isNotEmpty
                         ? () => _deleteSelectedDeliveryManagers()
                         : null, // Disable if no products selected
-                child: Text('Delete'),
+                child: Text('삭제'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedDeliveryManagers.isNotEmpty
@@ -178,10 +178,10 @@ class _DeliveryManagerManagementScreenState
                     ),
                     child: Row(
                       children: [
-                        _buildTableHeader('Name', 1),
-                        _buildTableHeader('Email', 2),
-                        _buildTableHeader('Phone Number', 2),
-                        _buildTableHeader('Preferences (KT/Email)', 2),
+                        _buildTableHeader('이름', 1),
+                        _buildTableHeader('이메일', 2),
+                        _buildTableHeader('전화번호', 2),
+                        _buildTableHeader('카톡/이메일', 2),
                         _buildTableHeader('', 1),
                       ],
                     ),
@@ -198,16 +198,12 @@ class _DeliveryManagerManagementScreenState
                         }
                         // 3. Check for null data
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(
-                            child: Text('No delivery managers available'),
-                          );
+                          return Center(child: Text('배송 관리자가 없습니다'));
                         }
                         final deliveryManagers = snapshot.data!.docs;
 
                         if (deliveryManagers.isEmpty) {
-                          return Center(
-                            child: Text('No delivery managers found'),
-                          );
+                          return Center(child: Text('배송 관리자가 없습니다'));
                         }
                         return ListView.builder(
                           itemCount: deliveryManagers.length,
@@ -313,7 +309,7 @@ class _DeliveryManagerManagementScreenState
     String name = '';
     String email = '';
     String phone = '';
-    String preferences = '';
+    String preferences = '카톡';
 
     // Actually show the dialog
     showDialog(
@@ -322,7 +318,7 @@ class _DeliveryManagerManagementScreenState
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Add New Delivery Manager'),
+              title: Text('배송 관리자 추가'),
               content: Container(
                 width: 600,
                 child: Form(
@@ -335,10 +331,10 @@ class _DeliveryManagerManagementScreenState
                           children: [
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(labelText: 'Name'),
+                                decoration: InputDecoration(labelText: '이름'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter name';
+                                    return '이름을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -350,10 +346,10 @@ class _DeliveryManagerManagementScreenState
                             SizedBox(width: 16),
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(labelText: 'Email'),
+                                decoration: InputDecoration(labelText: '이메일'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter email';
+                                    return '이메일을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -370,13 +366,11 @@ class _DeliveryManagerManagementScreenState
                           children: [
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(
-                                  labelText: 'Phone Number',
-                                ),
+                                decoration: InputDecoration(labelText: '전화번호'),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter phone number';
+                                    return '전화번호를 입력하세요';
                                   }
                                   return null;
                                 },
@@ -388,17 +382,19 @@ class _DeliveryManagerManagementScreenState
                           ],
                         ),
                         SizedBox(height: 16),
-                        TextFormField(
-                          decoration: InputDecoration(labelText: 'Preferences'),
-                          maxLines: 3,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter preferences';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            preferences = value!;
+                        DropdownButton<String>(
+                          value: preferences,
+                          items:
+                              ['카톡', '이메일'].map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                          onChanged: (String? newValue) {
+                            setDialogState(() {
+                              preferences = newValue!;
+                            });
                           },
                         ),
                       ],
@@ -408,13 +404,13 @@ class _DeliveryManagerManagementScreenState
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel'),
+                  child: Text('취소'),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  child: Text('Save'),
+                  child: Text('저장'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
@@ -429,7 +425,7 @@ class _DeliveryManagerManagementScreenState
                               children: [
                                 CircularProgressIndicator(),
                                 SizedBox(width: 16),
-                                Text("Saving product..."),
+                                Text("저장중..."),
                               ],
                             ),
                           );
@@ -458,13 +454,9 @@ class _DeliveryManagerManagementScreenState
                         Navigator.of(context).pop();
 
                         // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Delivery manager added successfully',
-                            ),
-                          ),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('배송 관리자 추가 성공')));
                       } catch (e) {
                         // Close loading dialog
                         Navigator.of(context).pop();
@@ -506,7 +498,7 @@ class _DeliveryManagerManagementScreenState
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Edit Product'),
+              title: Text('수정'),
               content: Container(
                 width: 600,
                 child: Form(
@@ -520,10 +512,10 @@ class _DeliveryManagerManagementScreenState
                             Expanded(
                               child: TextFormField(
                                 initialValue: name,
-                                decoration: InputDecoration(labelText: 'Name'),
+                                decoration: InputDecoration(labelText: '이름'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter name';
+                                    return '이름을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -536,10 +528,10 @@ class _DeliveryManagerManagementScreenState
                             Expanded(
                               child: TextFormField(
                                 initialValue: email,
-                                decoration: InputDecoration(labelText: 'Email'),
+                                decoration: InputDecoration(labelText: '이메일'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter email';
+                                    return '이메일을 입력하세요';
                                   }
                                   return null;
                                 },
@@ -557,11 +549,11 @@ class _DeliveryManagerManagementScreenState
                             Expanded(
                               child: TextFormField(
                                 initialValue: phone,
-                                decoration: InputDecoration(labelText: 'Phone'),
+                                decoration: InputDecoration(labelText: '전화번호'),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter phone number';
+                                    return '전화번호를 입력하세요';
                                   }
                                   return null;
                                 },
@@ -574,18 +566,19 @@ class _DeliveryManagerManagementScreenState
                         ),
 
                         SizedBox(height: 16),
-                        TextFormField(
-                          initialValue: preferences,
-                          decoration: InputDecoration(labelText: 'Preferences'),
-                          maxLines: 3,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter preferences';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            preferences = value!;
+                        DropdownButton<String>(
+                          value: preferences,
+                          items:
+                              ['카톡', '이메일'].map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                          onChanged: (String? newValue) {
+                            setDialogState(() {
+                              preferences = newValue!;
+                            });
                           },
                         ),
                       ],
@@ -595,13 +588,13 @@ class _DeliveryManagerManagementScreenState
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel'),
+                  child: Text('취소'),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  child: Text('Save Changes'),
+                  child: Text('저장'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
@@ -616,7 +609,7 @@ class _DeliveryManagerManagementScreenState
                               children: [
                                 CircularProgressIndicator(),
                                 SizedBox(width: 16),
-                                Text("Updating product..."),
+                                Text("저장중..."),
                               ],
                             ),
                           );
@@ -645,13 +638,9 @@ class _DeliveryManagerManagementScreenState
                         Navigator.of(context).pop();
 
                         // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Delivery Manager updated successfully',
-                            ),
-                          ),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('배송 관리자 수정 성공')));
 
                         // Clear selection
                         _clearSelections();
@@ -683,21 +672,21 @@ class _DeliveryManagerManagementScreenState
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
+          title: Text('삭제 확인'),
           content: Text(
             _selectedDeliveryManagers.length == 1
-                ? 'Are you sure you want to delete this delivery manager?'
-                : 'Are you sure you want to delete ${_selectedDeliveryManagers.length} delivery managers?',
+                ? '삭제하시겠습니까?'
+                : '${_selectedDeliveryManagers.length}명의 배송 관리자를 삭제하시겠습니까?',
           ),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: Text('취소'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: Text('삭제'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 // Show loading indicator
@@ -710,7 +699,7 @@ class _DeliveryManagerManagementScreenState
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(width: 16),
-                          Text("Deleting products..."),
+                          Text("삭제중..."),
                         ],
                       ),
                     );
@@ -734,9 +723,9 @@ class _DeliveryManagerManagementScreenState
                   Navigator.of(context).pop();
 
                   // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Products deleted successfully')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('배송 관리자 삭제 성공')));
                 } catch (e) {
                   // Close loading dialog
                   Navigator.of(context).pop();

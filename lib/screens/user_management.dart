@@ -80,7 +80,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'User Management',
+            '사용자 관리',
             style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24.h),
@@ -96,7 +96,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search',
+                        hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -121,10 +121,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                child: Text(
-                  'Reported Users',
-                  style: TextStyle(color: Colors.black),
-                ),
+                child: Text('신고된 사용자', style: TextStyle(color: Colors.black)),
               ),
               SizedBox(width: 16.w),
               TextButton(
@@ -141,10 +138,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                child: Text(
-                  'Blocked Users',
-                  style: TextStyle(color: Colors.black),
-                ),
+                child: Text('차단된 사용자', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),
@@ -160,7 +154,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           _selectedUsers.first,
                         )
                         : null,
-                child: Text('Edit'),
+                child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedUsers.length == 1 ? Colors.blue : Colors.grey,
@@ -172,7 +166,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     _selectedUsers.isNotEmpty
                         ? () => _deleteSelectedProducts()
                         : null,
-                child: Text('Delete'),
+                child: Text('삭제'),
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedUsers.isNotEmpty ? Colors.red : Colors.grey,
@@ -198,11 +192,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildTableHeader('User ID', 1),
-                        _buildTableHeader('Full name', 1),
-                        _buildTableHeader('Registered Date', 1),
-                        _buildTableHeader('Subscription Status', 1),
-                        _buildTableHeader('', 1),
+                        _buildTableHeader('사용자 ID', 1),
+                        _buildTableHeader('이름', 1),
+                        _buildTableHeader('가입 날짜', 1),
+                        _buildTableHeader('구독 상태', 1),
+                        _buildTableHeader('선택', 1),
                       ],
                     ),
                   ),
@@ -218,12 +212,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         }
                         // 3. Check for null data
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No users available'));
+                          return Center(child: Text('사용자가 없습니다'));
                         }
                         final users = snapshot.data!.docs;
 
                         if (users.isEmpty) {
-                          return Center(child: Text('No users found'));
+                          return Center(child: Text('사용자가 없습니다'));
                         }
                         return ListView.builder(
                           itemCount: users.length,
@@ -329,7 +323,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Edit Product'),
+              title: Text('사용자 수정'),
               content: SizedBox(
                 width: 600,
                 child: Form(
@@ -343,19 +337,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             child: TextFormField(
                               initialValue: userId,
                               enabled: false,
-                              decoration: InputDecoration(labelText: 'User ID'),
+                              decoration: InputDecoration(labelText: '사용자 ID'),
                             ),
                           ),
                           SizedBox(width: 16),
                           Expanded(
                             child: TextFormField(
                               initialValue: userName,
-                              decoration: InputDecoration(
-                                labelText: 'User Name',
-                              ),
+                              decoration: InputDecoration(labelText: '이름'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter User name';
+                                  return '이름을 입력하세요';
                                 }
                                 return null;
                               },
@@ -368,7 +360,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       ),
                       SizedBox(height: 16),
                       CheckboxListTile(
-                        title: Text('Is Subscribed'),
+                        title: Text('구독 상태'),
                         value: isSub,
                         onChanged: (bool? value) {
                           setDialogState(() {
@@ -385,13 +377,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ),
               actions: [
                 TextButton(
-                  child: Text('Cancel'),
+                  child: Text('취소'),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 ElevatedButton(
-                  child: Text('Save Changes'),
+                  child: Text('저장'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
@@ -406,7 +398,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                               children: [
                                 CircularProgressIndicator(),
                                 SizedBox(width: 16),
-                                Text("Updating product..."),
+                                Text("저장중..."),
                               ],
                             ),
                           );
@@ -435,9 +427,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         Navigator.of(context).pop();
 
                         // Show success message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('User updated successfully')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('사용자 수정 완료')));
 
                         // Clear selection
                         _clearSelections();
@@ -469,21 +461,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
+          title: Text('삭제 확인'),
           content: Text(
             _selectedUsers.length == 1
-                ? 'Are you sure you want to delete this user?'
-                : 'Are you sure you want to delete ${_selectedUsers.length} users?',
+                ? '삭제하시겠습니까?'
+                : '${_selectedUsers.length}명의 사용자를 삭제하시겠습니까?',
           ),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: Text('취소'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: Text('Delete'),
+              child: Text('삭제'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 // Show loading indicator
@@ -496,7 +488,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(width: 16),
-                          Text("Deleting users..."),
+                          Text("삭제중..."),
                         ],
                       ),
                     );
@@ -518,9 +510,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
                   // Close loading dialog
                   // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Users deleted successfully')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('사용자 삭제 완료')));
                 } catch (e) {
                   // Close loading dialog
                   Navigator.of(context).pop();
