@@ -903,7 +903,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 // Upload main image if selected
                                 if (_mainImage != null) {
                                   imgUrl = await _productService
-                                      .uploadImageToImgBB(_mainImage!);
+                                      .uploadImageToFirebaseStorage(
+                                        _mainImage!,
+                                      );
                                 }
 
                                 // Upload additional images if selected
@@ -1541,7 +1543,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 // Upload main image if a new one was selected
                                 if (_mainImage != null) {
                                   imgUrl = await _productService
-                                      .uploadImageToImgBB(_mainImage!);
+                                      .uploadImageToFirebaseStorage(
+                                        _mainImage!,
+                                      );
                                 }
 
                                 // Upload additional images if new ones were selected

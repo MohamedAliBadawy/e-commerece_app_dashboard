@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/product_model.dart';
 
@@ -22,35 +24,56 @@ class ProductService {
     return productsCollection.doc(productId).delete();
   }
 
-  Future<String> uploadImageToImgBB(XFile image) async {
-    final bytes = await image.readAsBytes();
+  Future<String> uploadImageToFirebaseStorage(XFile image) async {
+    try {
+      // 1. Handle web-specific file naming
+      String fileName;
+      String? mimeType;
 
-    final base64Image = base64Encode(bytes);
+      if (kIsWeb) {
+        // For web, extract proper extension from MIME type
+        mimeType = image.mimeType;
+        final extension = mimeType?.split('/').last ?? 'jpg';
+        fileName = 'upload_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      } else {
+        // For mobile, use the original file path
+        final extension = image.path.split('.').last;
+        fileName = 'upload_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      }
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('https://api.imgbb.com/1/upload'),
-    );
+      // 2. Create storage reference
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_uploads')
+          .child(fileName);
 
-    request.fields['key'] = imgbbApiKey;
+      // 3. Read image bytes
+      final bytes = await image.readAsBytes();
 
-    request.fields['image'] = base64Image;
+      // 4. Determine MIME type
+      final metadata = SettableMetadata(
+        contentType: mimeType ?? 'image/jpeg', // Default to JPEG if unknown
+        customMetadata: {
+          'original_name': image.name,
+          'uploaded_at': DateTime.now().toIso8601String(),
+        },
+      );
 
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
+      // 5. Upload file
+      final uploadTask = storageRef.putData(bytes, metadata);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
 
-    if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-      return jsonData['data']['url'];
-    } else {
-      throw Exception('Failed to upload image: ${response.body}');
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: ${e.toString()}');
     }
   }
 
   Future<List<String>> uploadProductImages(List<XFile> files) async {
     List<String> urls = [];
     for (var file in files) {
-      String url = await uploadImageToImgBB(file);
+      String url = await uploadImageToFirebaseStorage(file);
       urls.add(url);
     }
     return urls;
