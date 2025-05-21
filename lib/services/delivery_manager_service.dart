@@ -20,16 +20,6 @@ class DeliveryManagerService {
     }).toList();
   }
 
-  String generateRandomPassword(int length) {
-    const chars =
-        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%^&*';
-    final rand = Random.secure();
-    return List.generate(
-      length,
-      (index) => chars[rand.nextInt(chars.length)],
-    ).join();
-  }
-
   Future<void> addDeliveryManager(DeliveryManager deliveryManager) async {
     try {
       deliveryManager.userId = deliveryManager.phone;
