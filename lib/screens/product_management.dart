@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../models/product_model.dart';
 import '../services/product_service.dart';
 
@@ -349,12 +350,16 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     bool freeShipping = true;
     String instructions = '';
     int stock = 0;
+    int deliveryPrice = 0;
+    int shippingFee = 0;
+    int estimatedSettlement = 0;
     int baselineTime = 0;
     String meridiem = 'AM';
     String? imgUrl;
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
     String deliveryManagerId = '';
+    DateTime? _selectedDate;
 
     bool _imagesLoading = false;
 
@@ -415,6 +420,20 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                       isLoadingDeliveryManagers = false;
                     });
                   });
+            }
+
+            Future<void> _selectDate(BuildContext context) async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate ?? DateTime.now(),
+                firstDate: DateTime(2025),
+                lastDate: DateTime(2050),
+              );
+              if (picked != null && picked != _selectedDate) {
+                setDialogState(() {
+                  _selectedDate = picked;
+                });
+              }
             }
 
             // Function to pick main image
@@ -709,6 +728,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: TextFormField(
                                 decoration: InputDecoration(labelText: '재고'),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return '재고를 입력하세요';
@@ -781,6 +804,94 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           ],
                         ),
                         SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Delivery Price',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Delivery Price를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  deliveryPrice = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText:
+                                      'Additional Shipping Fee for remote',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Additional Shipping Fee for remote를 입력하세요';
+                                  }
+
+                                  final number = int.tryParse(value);
+                                  if (number == null) {
+                                    return '유효한 숫자를 입력하세요';
+                                  }
+
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  shippingFee = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Estimated Settlement',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Estimated Settlement를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  estimatedSettlement = int.parse(value!);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Flexible(
+                          child: ListTile(
+                            title: Text(
+                              _selectedDate == null
+                                  ? 'No date selected'
+                                  : 'Selected: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+                            ),
+                            trailing: Icon(Icons.calendar_today),
+                            onTap: () => _selectDate(context),
+                          ),
+                        ),
                         TextFormField(
                           decoration: InputDecoration(labelText: '설명 추가'),
                           maxLines: 3,
@@ -930,6 +1041,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
                                   deliveryManagerId: deliveryManagerId,
+                                  estimatedSettlementDate: DateFormat(
+                                    'yyyy-MM-dd',
+                                  ).format(_selectedDate!),
+                                  estimatedSettlement: estimatedSettlement,
+                                  deliveryPrice: deliveryPrice,
+                                  shippingFee: shippingFee,
                                 );
 
                                 // Save to Firestore
@@ -991,6 +1108,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String meridiem = product.meridiem;
     String? imgUrl = product.imgUrl;
     List<String?> imgUrls = List.from(product.imgUrls);
+    int deliveryPrice = product.deliveryPrice ?? 0;
+    int shippingFee = product.shippingFee ?? 0;
+    int estimatedSettlement = product.estimatedSettlement ?? 0;
+    DateTime? _selectedDate =
+        product.estimatedSettlementDate != ''
+            ? DateTime.parse(product.estimatedSettlementDate!)
+            : null;
 
     bool _imagesLoading = false;
 
@@ -1104,6 +1228,20 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 // Update the dialog UI
                 setDialogState(() {
                   _imagesLoading = false;
+                });
+              }
+            }
+
+            Future<void> _selectDate(BuildContext context) async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate ?? DateTime.now(),
+                firstDate: DateTime(2025),
+                lastDate: DateTime(2050),
+              );
+              if (picked != null && picked != _selectedDate) {
+                setDialogState(() {
+                  _selectedDate = picked;
                 });
               }
             }
@@ -1418,7 +1556,97 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             ),
                           ],
                         ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: deliveryPrice.toString(),
+                                decoration: InputDecoration(
+                                  labelText: 'Delivery Price',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Delivery Price를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  deliveryPrice = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: shippingFee.toString(),
+                                decoration: InputDecoration(
+                                  labelText:
+                                      'Additional Shipping Fee for remote',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Additional Shipping Fee for remote를 입력하세요';
+                                  }
 
+                                  final number = int.tryParse(value);
+                                  if (number == null) {
+                                    return '유효한 숫자를 입력하세요';
+                                  }
+
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  shippingFee = int.parse(value!);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: estimatedSettlement.toString(),
+                                decoration: InputDecoration(
+                                  labelText: 'Estimated Settlement',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Estimated Settlement를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  estimatedSettlement = int.parse(value!);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Flexible(
+                          child: ListTile(
+                            title: Text(
+                              _selectedDate == null
+                                  ? 'No date selected'
+                                  : 'Selected: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+                            ),
+                            trailing: Icon(Icons.calendar_today),
+                            onTap: () => _selectDate(context),
+                          ),
+                        ),
                         SizedBox(height: 16),
                         TextFormField(
                           initialValue: instructions,
@@ -1576,6 +1804,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
                                   deliveryManagerId: deliveryManagerId,
+                                  estimatedSettlementDate:
+                                      _selectedDate != null
+                                          ? DateFormat(
+                                            'yyyy-MM-dd',
+                                          ).format(_selectedDate!)
+                                          : null,
+                                  estimatedSettlement: estimatedSettlement,
+                                  deliveryPrice: deliveryPrice,
+                                  shippingFee: shippingFee,
                                 );
 
                                 // Update in Firestore
