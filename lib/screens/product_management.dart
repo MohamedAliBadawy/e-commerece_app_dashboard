@@ -14,6 +14,43 @@ import 'package:intl/intl.dart';
 import '../models/product_model.dart';
 import '../services/product_service.dart';
 
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  static const separator = ',';
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Remove all separators
+    String oldValueText = oldValue.text.replaceAll(separator, '');
+    String newValueText = newValue.text.replaceAll(separator, '');
+
+    if (oldValue.text.endsWith(separator) &&
+        oldValue.text.length == newValue.text.length + 1) {
+      newValueText = newValueText.substring(0, newValueText.length - 1);
+    }
+
+    // Only process if the new value is a valid number
+    if (double.tryParse(newValueText) == null) {
+      return oldValue;
+    }
+
+    // Format the number
+    final formatter = NumberFormat('#,###.##');
+    String newText = formatter.format(double.parse(newValueText));
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
+}
+
 class ProductManagementScreen extends StatefulWidget {
   @override
   _ProductManagementScreenState createState() =>
@@ -304,7 +341,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 children: [
                   ...product.pricePoints.map(
                     (pp) => Text(
-                      '${pp.quantity} qty = \$${pp.price}',
+                      '${pp.quantity} qty = \$${NumberFormat('#,###').format(pp.price)}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),
@@ -346,11 +383,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     bool isLoadingCategories = true;
     bool isLoadingDeliveryManagers = true;
     List<DeliveryManager> deliveryManagers = [];
-    int price = 0;
+    double price = 0;
     bool freeShipping = true;
     String instructions = '';
     int stock = 0;
     int deliveryPrice = 0;
+    int supplyPrice = 0;
+    double marginRate = 0;
     int shippingFee = 0;
     int estimatedSettlement = 0;
     int baselineTime = 0;
@@ -530,21 +569,6 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                decoration: InputDecoration(labelText: '상품명'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return '상품명을 입력하세요';
-                                  }
-                                  return null;
-                                },
-                                onSaved: (value) {
-                                  productName = value!;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
                                 decoration: InputDecoration(labelText: '판매자명'),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -554,6 +578,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onSaved: (value) {
                                   sellerName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '상품명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '상품명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  productName = value!;
                                 },
                               ),
                             ),
@@ -604,6 +643,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemCount: pricePoints.length,
                                     itemBuilder: (context, index) {
+                                      pricePoints[index].price =
+                                          ((pricePoints[index].quantity *
+                                                  supplyPrice) +
+                                              deliveryPrice) /
+                                          (1 - (marginRate / 100));
                                       return Padding(
                                         padding: const EdgeInsets.only(
                                           bottom: 8.0,
@@ -634,21 +678,24 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                             SizedBox(width: 16),
                                             Expanded(
                                               child: TextFormField(
-                                                initialValue:
-                                                    pricePoints[index].price
-                                                        .toString(),
+                                                enabled: false,
+                                                inputFormatters: [
+                                                  ThousandsSeparatorInputFormatter(),
+                                                ],
+                                                controller:
+                                                    TextEditingController(
+                                                      text: NumberFormat(
+                                                        '#,###.##',
+                                                      ).format(
+                                                        pricePoints[index]
+                                                            .price,
+                                                      ),
+                                                    ),
                                                 decoration: InputDecoration(
                                                   labelText: '가격',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
-                                                onChanged: (value) {
-                                                  setDialogState(() {
-                                                    pricePoints[index].price =
-                                                        int.tryParse(value) ??
-                                                        0;
-                                                  });
-                                                },
                                               ),
                                             ),
                                             IconButton(
@@ -809,12 +856,39 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             Expanded(
                               child: TextFormField(
                                 decoration: InputDecoration(
+                                  labelText: 'Supply Price',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(), // Use it here
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Supply Price를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    supplyPrice = int.parse(value);
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
                                   labelText: 'Delivery Price',
                                 ),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(), // Use it here
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -822,8 +896,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   }
                                   return null;
                                 },
-                                onSaved: (value) {
-                                  deliveryPrice = int.parse(value!);
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    deliveryPrice = int.parse(value);
+                                  });
                                 },
                               ),
                             ),
@@ -838,6 +914,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -856,6 +933,38 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: 'Margin Rate (%)',
+                                ),
+                                keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d*'),
+                                  ),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Margin Rate를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    marginRate = double.parse(value);
+                                  });
+                                },
+                              ),
+                            ),
                             SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
@@ -866,6 +975,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1032,6 +1142,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   sellerName: sellerName,
                                   category: category,
                                   price: price,
+                                  supplyPrice: supplyPrice,
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,
                                   instructions: instructions,
@@ -1040,6 +1151,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   meridiem: meridiem,
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
+                                  marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
                                   estimatedSettlementDate: DateFormat(
                                     'yyyy-MM-dd',
@@ -1098,7 +1210,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     bool isLoadingCategories = true;
     bool isLoadingDeliveryManagers = true;
     List<DeliveryManager> deliveryManagers = [];
-    int price = product.price;
+    double price = product.price;
     List<PricePoint> pricePoints = product.pricePoints;
     String? deliveryManagerId = product.deliveryManagerId;
     bool freeShipping = product.freeShipping;
@@ -1109,6 +1221,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String? imgUrl = product.imgUrl;
     List<String?> imgUrls = List.from(product.imgUrls);
     int deliveryPrice = product.deliveryPrice ?? 0;
+    int supplyPrice = product.supplyPrice ?? 0;
+    double marginRate = product.marginRate ?? 0;
     int shippingFee = product.shippingFee ?? 0;
     int estimatedSettlement = product.estimatedSettlement ?? 0;
     DateTime? _selectedDate =
@@ -1302,22 +1416,6 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                initialValue: productName,
-                                decoration: InputDecoration(labelText: '상품명'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return '상품명을 입력하세요';
-                                  }
-                                  return null;
-                                },
-                                onSaved: (value) {
-                                  productName = value!;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
                                 initialValue: sellerName,
                                 decoration: InputDecoration(labelText: '판매자명'),
                                 validator: (value) {
@@ -1328,6 +1426,22 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onSaved: (value) {
                                   sellerName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: productName,
+                                decoration: InputDecoration(labelText: '상품명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '상품명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  productName = value!;
                                 },
                               ),
                             ),
@@ -1377,6 +1491,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemCount: pricePoints.length,
                                     itemBuilder: (context, index) {
+                                      pricePoints[index].price =
+                                          ((pricePoints[index].quantity *
+                                                  supplyPrice) +
+                                              deliveryPrice) /
+                                          (1 - (marginRate / 100));
+
                                       return Padding(
                                         padding: const EdgeInsets.only(
                                           bottom: 8.0,
@@ -1407,21 +1527,24 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                             SizedBox(width: 16),
                                             Expanded(
                                               child: TextFormField(
-                                                initialValue:
-                                                    pricePoints[index].price
-                                                        .toString(),
+                                                enabled: false,
+                                                inputFormatters: [
+                                                  ThousandsSeparatorInputFormatter(),
+                                                ],
+                                                controller:
+                                                    TextEditingController(
+                                                      text: NumberFormat(
+                                                        '#,###.##',
+                                                      ).format(
+                                                        pricePoints[index]
+                                                            .price,
+                                                      ),
+                                                    ),
                                                 decoration: InputDecoration(
                                                   labelText: '가격',
                                                 ),
                                                 keyboardType:
                                                     TextInputType.number,
-                                                onChanged: (value) {
-                                                  setDialogState(() {
-                                                    pricePoints[index].price =
-                                                        int.tryParse(value) ??
-                                                        0;
-                                                  });
-                                                },
                                               ),
                                             ),
                                             IconButton(
@@ -1562,12 +1685,39 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               child: TextFormField(
                                 initialValue: deliveryPrice.toString(),
                                 decoration: InputDecoration(
+                                  labelText: 'Supply Price',
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter
+                                      .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Supply Price를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    supplyPrice = int.parse(value);
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: deliveryPrice.toString(),
+                                decoration: InputDecoration(
                                   labelText: 'Delivery Price',
                                 ),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1575,8 +1725,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   }
                                   return null;
                                 },
-                                onSaved: (value) {
-                                  deliveryPrice = int.parse(value!);
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    deliveryPrice = int.parse(value!);
+                                  });
                                 },
                               ),
                             ),
@@ -1592,6 +1744,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1610,6 +1763,38 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: marginRate.toString(),
+                                decoration: InputDecoration(
+                                  labelText: 'Margin Rate (%)',
+                                ),
+                                keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d*'),
+                                  ),
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Margin Rate를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    marginRate = double.parse(value);
+                                  });
+                                },
+                              ),
+                            ),
                             SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
@@ -1621,6 +1806,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 inputFormatters: [
                                   FilteringTextInputFormatter
                                       .digitsOnly, // Only allow digits
+                                  ThousandsSeparatorInputFormatter(),
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -1710,11 +1896,61 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       ),
                                       child:
                                           _additionalImagePreviews.isNotEmpty
-                                              ? ListView(
+                                              ? ReorderableListView(
                                                 scrollDirection:
                                                     Axis.horizontal,
+                                                onReorder: (
+                                                  oldIndex,
+                                                  newIndex,
+                                                ) {
+                                                  setDialogState(() {
+                                                    if (newIndex > oldIndex) {
+                                                      newIndex -= 1;
+                                                    }
+                                                    final item =
+                                                        _additionalImagePreviews
+                                                            .removeAt(oldIndex);
+                                                    _additionalImagePreviews
+                                                        .insert(newIndex, item);
+                                                  });
+                                                },
                                                 children:
-                                                    _additionalImagePreviews,
+                                                    _additionalImagePreviews.asMap().entries.map((
+                                                      entry,
+                                                    ) {
+                                                      int index = entry.key;
+                                                      Widget imageWidget =
+                                                          entry.value;
+
+                                                      return Stack(
+                                                        key: ValueKey(
+                                                          index,
+                                                        ), // Required for ReorderableListView
+                                                        children: [
+                                                          imageWidget,
+                                                          // Delete button
+                                                          Positioned(
+                                                            top: 0,
+                                                            right: 0,
+                                                            child: IconButton(
+                                                              icon: Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                              onPressed: () {
+                                                                setDialogState(() {
+                                                                  _additionalImagePreviews
+                                                                      .removeAt(
+                                                                        index,
+                                                                      );
+                                                                });
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
                                               )
                                               : Center(
                                                 child: Icon(
@@ -1793,6 +2029,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   product_id: productId,
                                   productName: productName,
                                   sellerName: sellerName,
+                                  supplyPrice: supplyPrice,
                                   category: category,
                                   price: price,
                                   pricePoints: pricePoints,
@@ -1803,6 +2040,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   meridiem: meridiem,
                                   imgUrl: imgUrl,
                                   imgUrls: imgUrls,
+                                  marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
                                   estimatedSettlementDate:
                                       _selectedDate != null

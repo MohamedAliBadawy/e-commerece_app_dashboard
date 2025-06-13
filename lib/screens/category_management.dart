@@ -16,6 +16,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   List<Category> _categories = [];
   List<Category> _filteredCategories = [];
   Set<String> _selectedCategoryIds = {}; // Fixed variable name
+  bool _isReorderMode = false; // Add this flag
 
   @override
   void initState() {
@@ -67,6 +68,34 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     });
   }
 
+  void _toggleReorderMode() {
+    setState(() {
+      _isReorderMode = !_isReorderMode;
+      if (_isReorderMode) {
+        _selectedCategoryIds
+            .clear(); // Clear selections when entering reorder mode
+        _searchController.clear(); // Clear search
+        _filteredCategories = _categories; // Show all categories
+      }
+    });
+  }
+
+  Future<void> _saveOrder() async {
+    try {
+      await _categoryService.updateCategoryOrder(_filteredCategories);
+      setState(() {
+        _isReorderMode = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('순서가 저장되었습니다')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    }
+  }
+
   List<Category> get _selectedCategories {
     return _categories
         .where(
@@ -97,6 +126,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ),
                   child: TextField(
                     controller: _searchController,
+                    enabled: !_isReorderMode, // Disable search in reorder mode
+
                     decoration: InputDecoration(
                       hintText: '검색',
                       prefixIcon: Icon(Icons.search),
@@ -108,52 +139,96 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 ),
               ),
               SizedBox(width: 16),
-              ElevatedButton.icon(
-                icon: Icon(Icons.add),
-                label: Text('카테고리 추가'),
-                onPressed: () => _showAddCategoryDialog(context),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              if (!_isReorderMode) ...[
+                ElevatedButton.icon(
+                  icon: Icon(Icons.add),
+                  label: Text('카테고리 추가'),
+                  onPressed: () => _showAddCategoryDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                 ),
-              ),
+                SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.reorder),
+                  label: Text('순서 변경'),
+                  onPressed: _toggleReorderMode,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    backgroundColor: Colors.orange,
+                  ),
+                ),
+              ] else ...[
+                ElevatedButton.icon(
+                  icon: Icon(Icons.save),
+                  label: Text('순서 저장'),
+                  onPressed: _saveOrder,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    backgroundColor: Colors.green,
+                  ),
+                ),
+                SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.cancel),
+                  label: Text('취소'),
+                  onPressed: _toggleReorderMode,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    backgroundColor: Colors.grey,
+                  ),
+                ),
+              ],
             ],
           ),
           SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed:
-                    _selectedCategoryIds.length == 1
-                        ? () => _showEditCategoryDialog(
-                          context,
-                          _selectedCategories.first,
-                        )
-                        : null,
-                child: Text('수정'),
-                style: TextButton.styleFrom(
-                  foregroundColor:
+          if (!_isReorderMode)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed:
                       _selectedCategoryIds.length == 1
-                          ? Colors.blue
-                          : Colors.grey,
+                          ? () => _showEditCategoryDialog(
+                            context,
+                            _selectedCategories.first,
+                          )
+                          : null,
+                  child: Text('수정'),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        _selectedCategoryIds.length == 1
+                            ? Colors.blue
+                            : Colors.grey,
+                  ),
                 ),
-              ),
-              SizedBox(width: 16),
-              TextButton(
-                onPressed:
-                    _selectedCategoryIds.isNotEmpty
-                        ? () => _deleteSelectedCategories()
-                        : null,
-                child: Text('삭제'),
-                style: TextButton.styleFrom(
-                  foregroundColor:
+                SizedBox(width: 16),
+                TextButton(
+                  onPressed:
                       _selectedCategoryIds.isNotEmpty
-                          ? Colors.red
-                          : Colors.grey,
+                          ? () => _deleteSelectedCategories()
+                          : null,
+                  child: Text('삭제'),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        _selectedCategoryIds.isNotEmpty
+                            ? Colors.red
+                            : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          if (_isReorderMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                '드래그하여 순서를 변경하세요',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
+            ),
           SizedBox(height: 8),
           Expanded(
             child: Container(
@@ -179,13 +254,36 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ),
                   // Table body
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: _filteredCategories.length,
-                      itemBuilder: (context, index) {
-                        final category = _filteredCategories[index];
-                        return _buildCategoryRow(category);
-                      },
-                    ),
+                    child:
+                        _isReorderMode
+                            ? ReorderableListView.builder(
+                              itemCount: _filteredCategories.length,
+                              itemBuilder: (context, index) {
+                                final category = _filteredCategories[index];
+                                return Container(
+                                  key: ValueKey(category.id),
+                                  child: _buildCategoryRow(category),
+                                );
+                              },
+                              onReorder: (oldIndex, newIndex) {
+                                setState(() {
+                                  if (newIndex > oldIndex) {
+                                    newIndex -= 1;
+                                  }
+                                  final item = _filteredCategories.removeAt(
+                                    oldIndex,
+                                  );
+                                  _filteredCategories.insert(newIndex, item);
+                                });
+                              },
+                            )
+                            : ListView.builder(
+                              itemCount: _filteredCategories.length,
+                              itemBuilder: (context, index) {
+                                final category = _filteredCategories[index];
+                                return _buildCategoryRow(category);
+                              },
+                            ),
                   ),
                 ],
               ),
@@ -223,19 +321,20 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               child: Text(category.name),
             ),
           ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(
-                  value: isSelected,
-                  onChanged: (value) {
-                    _toggleCategorySelection(category.id);
-                  },
-                ),
-              ],
+          if (!_isReorderMode)
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (value) {
+                      _toggleCategorySelection(category.id);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -307,6 +406,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                         Category newCategory = Category(
                           id: '', // Empty ID that will be replaced
                           name: name,
+                          order: 0, // This will be updated by the service
                         );
 
                         await _categoryService.addCategory(newCategory);
@@ -406,6 +506,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                         Category updatedCategory = Category(
                           id: categoryId,
                           name: name,
+                          order: 0,
                         );
 
                         await _categoryService.updateCategory(updatedCategory);
