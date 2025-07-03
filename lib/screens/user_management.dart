@@ -315,7 +315,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     String userId = user.userId;
     String userName = user.name;
     bool isSub = user.isSub;
-
+    String type = user.type;
+    bool isBrand = user.type == 'brand';
     // Actually show the dialog
     showDialog(
       context: context,
@@ -371,6 +372,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             ListTileControlAffinity
                                 .leading, // checkbox on the left
                       ),
+                      SizedBox(height: 16),
+                      CheckboxListTile(
+                        title: Text('brand'),
+                        value: isBrand,
+                        onChanged: (bool? value) {
+                          setDialogState(() {
+                            isBrand = value ?? false;
+
+                            isBrand ? type = 'brand' : type = 'user';
+                          });
+                        },
+                        controlAffinity:
+                            ListTileControlAffinity
+                                .leading, // checkbox on the left
+                      ),
                     ],
                   ),
                 ),
@@ -415,6 +431,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           url: user.url,
                           blocked: user.blocked,
                           createdAt: user.createdAt,
+                          type: type,
                         );
 
                         // Update in Firestore

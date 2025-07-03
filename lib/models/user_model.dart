@@ -15,6 +15,7 @@ class User {
 
   bool isSub;
 
+  String type;
   User({
     required this.userId,
     required this.email,
@@ -23,6 +24,7 @@ class User {
     this.blocked,
     this.createdAt,
     required this.isSub,
+    this.type = 'user',
   });
 
   Map<String, Object?> toDocument() {
@@ -34,6 +36,7 @@ class User {
       'blocked': blocked,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'isSub': isSub,
+      'type': type,
     };
   }
 
@@ -46,6 +49,7 @@ class User {
       blocked: doc['blocked'] ?? [],
       createdAt: doc['createdAt'],
       isSub: doc['isSub'] ?? false,
+      type: doc['type'] ?? 'user',
     );
   }
 
