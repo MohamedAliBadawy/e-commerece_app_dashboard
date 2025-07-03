@@ -25,12 +25,28 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   void _loadCategories() {
-    _categoryService.getCategories().listen((categories) {
-      setState(() {
-        _categories = categories;
-        _filteredCategories = categories; // Initialize filtered list
-      });
-    });
+    _categoryService.getCategories().listen(
+      (categories) {
+        print('Loaded categories: ' + categories.length.toString());
+        for (var c in categories) {
+          print(
+            'Category: id=' +
+                c.id +
+                ', name=' +
+                c.name +
+                ', order=' +
+                c.order.toString(),
+          );
+        }
+        setState(() {
+          _categories = categories;
+          _filteredCategories = categories; // Initialize filtered list
+        });
+      },
+      onError: (e) {
+        print('Error loading categories: ' + e.toString());
+      },
+    );
   }
 
   void _filterCategories(String query) {
@@ -383,24 +399,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
-
-                      // Show loading indicator
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            content: Row(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(width: 16),
-                                Text("Saving category..."),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-
                       try {
                         // Create with empty ID - the service will update it
                         Category newCategory = Category(
@@ -408,22 +406,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           name: name,
                           order: 0, // This will be updated by the service
                         );
-
                         await _categoryService.addCategory(newCategory);
-
-                        // Close dialogs
-                        Navigator.of(context).pop(); // Close form
-
+                        Navigator.of(context).pop(); // Close dialog after add
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Category added successfully'),
                           ),
                         );
                       } catch (e) {
-                        // Close loading dialog
-                        Navigator.of(context).pop();
-
-                        // Show error message
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error: ${e.toString()}')),
                         );
