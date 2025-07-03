@@ -45,7 +45,7 @@ class User {
       url: doc['url'],
       blocked: doc['blocked'] ?? [],
       createdAt: doc['createdAt'],
-      isSub: doc['isSub'],
+      isSub: doc['isSub'] ?? false,
     );
   }
 
