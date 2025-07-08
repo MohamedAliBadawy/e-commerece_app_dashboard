@@ -218,19 +218,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                                   ),
                                                 ),
                                               )
-                                              : Container(
-                                                width: 100.w,
-                                                height: 55.h,
-                                                decoration: ShapeDecoration(
-                                                  color: Colors.grey.shade300,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          0,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ),
+                                              : Text('이미지 없음'),
                                     ),
                                   ),
                                   Expanded(
@@ -259,6 +247,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                               child: Text('유저를 찾을 수 없습니다'),
                                             );
                                           }
+
                                           final user = User.fromDocument(
                                             snapshot.data!.data()
                                                 as Map<String, dynamic>,
