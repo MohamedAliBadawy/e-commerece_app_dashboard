@@ -8,6 +8,7 @@ import 'package:ecommerce_app_dashboard/models/product_model.dart';
 import 'package:ecommerce_app_dashboard/models/refund_model.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
 import 'package:ecommerce_app_dashboard/services/order_service.dart';
+import 'package:ecommerce_app_dashboard/services/refund_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -56,6 +57,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   final List<MyOrder> _selectedOrders = [];
   Timer? _debounce;
   Map<String, String?> selectedManagerNames = {}; // orderId -> managerName
+  final RefundService _refundService = RefundService();
 
   Stream<QuerySnapshot> getOrdersStream(String query) {
     if (query.isEmpty) {
@@ -107,6 +109,69 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRefund(
+    BuildContext context,
+    bool isRefund,
+    String orderId,
+    String uid,
+  ) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      final result = await _refundService.requestRefund(
+        orderId: orderId,
+        isRefund: isRefund,
+        uid: uid,
+      );
+
+      // Delete the refund document after successful refund
+      try {
+        // Query to find the refund document with this orderId
+        final refundQuery =
+            await FirebaseFirestore.instance
+                .collection('refunds')
+                .where('orderId', isEqualTo: orderId)
+                .get();
+
+        // Delete all matching documents (should be only one)
+        for (var doc in refundQuery.docs) {
+          await doc.reference.delete();
+        }
+      } catch (deleteError) {
+        print('Error deleting refund document: $deleteError');
+        // Don't throw - the refund was successful even if deletion fails
+      }
+
+      Navigator.pop(context); // Close loading
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['status'] == 'refunded'
+                ? 'Order refunded successfully'
+                : 'Order canceled successfully',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Close loading
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
@@ -744,27 +809,32 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ),
               ),
               Expanded(
-                child: IconButton(
-                  onPressed: () async {
-                    /*   _showLoadingDialog(context);
-                    order.deliveryManagerId =
-                        selectedManagerNames[order.orderId]!;
-                    order.deliveryManager =
-                        deliveryManagerNames
-                            .firstWhere(
-                              (name) =>
-                                  name.userId ==
-                                  selectedManagerNames[order.orderId]!,
-                            )
-                            .name;
-                    await _orderService.updateOrder(order);
-
-                    Navigator.of(context, rootNavigator: true).pop();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('완료'))); */
-                  },
-                  icon: Icon(Icons.edit),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.check_circle, color: Colors.green),
+                      tooltip: 'Accept',
+                      onPressed:
+                          () => _handleRefund(
+                            context,
+                            true,
+                            refund.orderId,
+                            refund.userId,
+                          ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.cancel, color: Colors.red),
+                      tooltip: 'Cancel',
+                      onPressed:
+                          () => _handleRefund(
+                            context,
+                            false,
+                            refund.orderId,
+                            refund.userId,
+                          ),
+                    ),
+                  ],
                 ),
               ),
             ],
