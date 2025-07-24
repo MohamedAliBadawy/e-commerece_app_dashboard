@@ -42,7 +42,7 @@ class _AdminPageState extends State<AdminPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 650;
+    final isMobile = MediaQuery.of(context).size.width < 800;
     final isTablet = MediaQuery.of(context).size.width < 1100;
     final List<Widget> _pages = [
       UserManagementScreen(

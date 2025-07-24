@@ -5,8 +5,9 @@ import 'package:ecommerce_app_dashboard/models/user_model.dart';
 import 'package:ecommerce_app_dashboard/screens/blocked_users.dart';
 import 'package:ecommerce_app_dashboard/screens/reported_users.dart';
 import 'package:ecommerce_app_dashboard/services/user_service.dart';
+import 'package:ecommerce_app_dashboard/widgets/search_box.dart';
+import 'package:ecommerce_app_dashboard/widgets/sub_page_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class UserManagementScreen extends StatefulWidget {
   final void Function(Widget subPage)? onSubPageRequested;
@@ -23,6 +24,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   final List<User> _selectedUsers = [];
   Timer? _debounce;
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
 
   Stream<QuerySnapshot> getUsersStream(String query) {
     if (query.isEmpty) {
@@ -66,9 +69,31 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
     super.dispose();
   }
 
@@ -81,67 +106,70 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         children: [
           Text(
             '사용자 관리',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(4),
+          SizedBox(height: 24),
+
+          MediaQuery.of(context).size.width < 800
+              ? Column(
+                children: [
+                  SearchBox(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
                   ),
-                  child: SizedBox(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: '검색',
-                        prefixIcon: Icon(Icons.search),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SubPageButton(
+                        label: '신고된 사용자',
+                        onPressed: () {
+                          if (widget.onSubPageRequested != null) {
+                            widget.onSubPageRequested!(ReportedUsersScreen());
+                          }
+                        },
                       ),
+                      SizedBox(width: 16),
+                      SubPageButton(
+                        label: '차단된 사용자',
+                        onPressed: () {
+                          if (widget.onSubPageRequested != null) {
+                            widget.onSubPageRequested!(BlockedUsersScreen());
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              )
+              : Row(
+                children: [
+                  Expanded(
+                    child: SearchBox(
+                      controller: _searchController,
                       onChanged: _onSearchChanged,
                     ),
                   ),
-                ),
-              ),
-              SizedBox(width: 16.w),
-              TextButton(
-                onPressed: () {
-                  if (widget.onSubPageRequested != null) {
-                    widget.onSubPageRequested!(ReportedUsersScreen());
-                  }
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0),
+                  SizedBox(width: 16),
+                  SubPageButton(
+                    label: '신고된 사용자',
+                    onPressed: () {
+                      if (widget.onSubPageRequested != null) {
+                        widget.onSubPageRequested!(ReportedUsersScreen());
+                      }
+                    },
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                child: Text('신고된 사용자', style: TextStyle(color: Colors.black)),
-              ),
-              SizedBox(width: 16.w),
-              TextButton(
-                onPressed: () {
-                  if (widget.onSubPageRequested != null) {
-                    widget.onSubPageRequested!(BlockedUsersScreen());
-                  }
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0),
+                  SizedBox(width: 16),
+                  SubPageButton(
+                    label: '차단된 사용자',
+                    onPressed: () {
+                      if (widget.onSubPageRequested != null) {
+                        widget.onSubPageRequested!(BlockedUsersScreen());
+                      }
+                    },
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                child: Text('차단된 사용자', style: TextStyle(color: Colors.black)),
+                ],
               ),
-            ],
-          ),
           SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -184,20 +212,26 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               child: Column(
                 children: [
                   // Table header
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _headerScrollController,
+                    child: Container(
+                      width: 1600, // adjust to fit all columns
+
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildTableHeader('사용자 ID', 1),
-                        _buildTableHeader('이름', 1),
-                        _buildTableHeader('가입 날짜', 1),
-                        _buildTableHeader('구독 상태', 1),
-                        _buildTableHeader('선택', 1),
-                      ],
+                      child: Row(
+                        children: [
+                          _buildTableHeader('사용자 ID', 1),
+                          _buildTableHeader('이름', 1),
+                          _buildTableHeader('가입 날짜', 1),
+                          _buildTableHeader('구독 상태', 1),
+                          _buildTableHeader('선택', 1),
+                        ],
+                      ),
                     ),
                   ),
                   // Table body
@@ -219,14 +253,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         if (users.isEmpty) {
                           return Center(child: Text('사용자가 없습니다'));
                         }
-                        return ListView.builder(
-                          itemCount: users.length,
-                          itemBuilder: (context, index) {
-                            final user = User.fromDocument(
-                              users[index].data() as Map<String, dynamic>,
-                            );
-                            return _buildUserRow(user);
-                          },
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          controller: _bodyScrollController,
+                          child: SizedBox(
+                            width: 1600, // match header width
+
+                            child: ListView.builder(
+                              itemCount: users.length,
+                              itemBuilder: (context, index) {
+                                final user = User.fromDocument(
+                                  users[index].data() as Map<String, dynamic>,
+                                );
+                                return _buildUserRow(user);
+                              },
+                            ),
+                          ),
                         );
                       },
                     ),

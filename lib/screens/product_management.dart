@@ -8,7 +8,6 @@ import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../models/product_model.dart';
@@ -124,9 +123,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         children: [
           Text(
             '상품 관리',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -142,7 +141,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                       onChanged: _onSearchChanged,
                     ),
@@ -386,6 +385,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     double price = 0;
     bool freeShipping = true;
     String instructions = '';
+    String description = '';
     int stock = 0;
     int deliveryPrice = 0;
     int supplyPrice = 0;
@@ -797,7 +797,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       decoration: InputDecoration(
-                                        labelText: '기준 시간',
+                                        labelText: '주문 마감 시간',
                                         hintText: '1-12 사이 입력',
                                       ),
                                       keyboardType: TextInputType.number,
@@ -872,7 +872,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onChanged: (value) {
                                   setDialogState(() {
-                                    supplyPrice = int.parse(value);
+                                    supplyPrice = int.parse(
+                                      value.replaceAll(',', ''),
+                                    );
                                   });
                                 },
                               ),
@@ -898,7 +900,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onChanged: (value) {
                                   setDialogState(() {
-                                    deliveryPrice = int.parse(value);
+                                    deliveryPrice = int.parse(
+                                      value.replaceAll(',', ''),
+                                    );
                                   });
                                 },
                               ),
@@ -921,7 +925,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     return 'Additional Shipping Fee for remote를 입력하세요';
                                   }
 
-                                  final number = int.tryParse(value);
+                                  final number = int.tryParse(
+                                    value.replaceAll(',', ''),
+                                  );
                                   if (number == null) {
                                     return '유효한 숫자를 입력하세요';
                                   }
@@ -929,7 +935,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  shippingFee = int.parse(value!);
+                                  shippingFee = int.parse(
+                                    value!.replaceAll(',', ''),
+                                  );
                                 },
                               ),
                             ),
@@ -965,7 +973,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
-                            SizedBox(width: 8),
+                            /*  SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
                                 decoration: InputDecoration(
@@ -984,13 +992,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  estimatedSettlement = int.parse(value!);
+                                  estimatedSettlement = int.parse(
+                                    value!.replaceAll(',', ''),
+                                  );
                                 },
                               ),
-                            ),
+                            ), */
                           ],
                         ),
-                        SizedBox(height: 16),
+                        /* SizedBox(height: 16),
                         Flexible(
                           child: ListTile(
                             title: Text(
@@ -1001,9 +1011,23 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             trailing: Icon(Icons.calendar_today),
                             onTap: () => _selectDate(context),
                           ),
-                        ),
+                        ), */
                         TextFormField(
-                          decoration: InputDecoration(labelText: '설명 추가'),
+                          decoration: InputDecoration(labelText: '상품 설명'),
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return '설명을 입력하세요';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            description = value!;
+                          },
+                        ),
+                        SizedBox(height: 24),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: '보관법 및 소비기한'),
                           maxLines: 3,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -1146,6 +1170,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,
                                   instructions: instructions,
+                                  description: description,
                                   stock: stock,
                                   baselineTime: baselineTime,
                                   meridiem: meridiem,
@@ -1153,10 +1178,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrls: imgUrls,
                                   marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
-                                  estimatedSettlementDate: DateFormat(
+                                  /*                                   estimatedSettlementDate: DateFormat(
                                     'yyyy-MM-dd',
                                   ).format(_selectedDate!),
-                                  estimatedSettlement: estimatedSettlement,
+                                  estimatedSettlement: estimatedSettlement, */
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
                                 );
@@ -1215,6 +1240,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String? deliveryManagerId = product.deliveryManagerId;
     bool freeShipping = product.freeShipping;
     String instructions = product.instructions;
+    String description = product.description;
     int stock = product.stock;
     int baselineTime = product.baselineTime;
     String meridiem = product.meridiem;
@@ -1224,11 +1250,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     int supplyPrice = product.supplyPrice ?? 0;
     double marginRate = product.marginRate ?? 0;
     int shippingFee = product.shippingFee ?? 0;
-    int estimatedSettlement = product.estimatedSettlement ?? 0;
+    /*     int estimatedSettlement = product.estimatedSettlement ?? 0;
     DateTime? _selectedDate =
         product.estimatedSettlementDate != ''
             ? DateTime.parse(product.estimatedSettlementDate!)
-            : null;
+            : null; */
 
     bool _imagesLoading = false;
 
@@ -1346,7 +1372,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               }
             }
 
-            Future<void> _selectDate(BuildContext context) async {
+            /*             Future<void> _selectDate(BuildContext context) async {
               final DateTime? picked = await showDatePicker(
                 context: context,
                 initialDate: _selectedDate ?? DateTime.now(),
@@ -1358,7 +1384,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   _selectedDate = picked;
                 });
               }
-            }
+            } */
 
             // Function to pick additional images
             Future<void> _pickAdditionalImages() async {
@@ -1644,7 +1670,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     child: TextFormField(
                                       initialValue: baselineTime.toString(),
                                       decoration: InputDecoration(
-                                        labelText: '기준 시간',
+                                        labelText: '주문 마감 시간',
                                       ),
                                       keyboardType: TextInputType.number,
                                       validator: (value) {
@@ -1701,7 +1727,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onChanged: (value) {
                                   setDialogState(() {
-                                    supplyPrice = int.parse(value);
+                                    supplyPrice = int.parse(
+                                      value.replaceAll(',', ''),
+                                    );
                                   });
                                 },
                               ),
@@ -1727,7 +1755,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                                 onChanged: (value) {
                                   setDialogState(() {
-                                    deliveryPrice = int.parse(value!);
+                                    deliveryPrice = int.parse(
+                                      value!.replaceAll(',', ''),
+                                    );
                                   });
                                 },
                               ),
@@ -1751,7 +1781,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                     return 'Additional Shipping Fee for remote를 입력하세요';
                                   }
 
-                                  final number = int.tryParse(value);
+                                  final number = int.tryParse(
+                                    value.replaceAll(',', ''),
+                                  );
                                   if (number == null) {
                                     return '유효한 숫자를 입력하세요';
                                   }
@@ -1759,7 +1791,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  shippingFee = int.parse(value!);
+                                  shippingFee = int.parse(
+                                    value!.replaceAll(',', ''),
+                                  );
                                 },
                               ),
                             ),
@@ -1795,7 +1829,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
-                            SizedBox(width: 8),
+                            /* SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
                                 initialValue: estimatedSettlement.toString(),
@@ -1815,13 +1849,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   return null;
                                 },
                                 onSaved: (value) {
-                                  estimatedSettlement = int.parse(value!);
+                                  estimatedSettlement = int.parse(
+                                    value!.replaceAll(',', ''),
+                                  );
                                 },
                               ),
-                            ),
+                            ), */
                           ],
                         ),
-                        SizedBox(height: 16),
+                        /*                         SizedBox(height: 16),
                         Flexible(
                           child: ListTile(
                             title: Text(
@@ -1832,11 +1868,26 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             trailing: Icon(Icons.calendar_today),
                             onTap: () => _selectDate(context),
                           ),
+                        ), */
+                        SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: description,
+                          decoration: InputDecoration(labelText: '상품 설명'),
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return '설명을 입력하세요';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            description = value!;
+                          },
                         ),
                         SizedBox(height: 16),
                         TextFormField(
                           initialValue: instructions,
-                          decoration: InputDecoration(labelText: '설명 추가'),
+                          decoration: InputDecoration(labelText: '보관법 및 소비기한'),
                           maxLines: 3,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -2035,6 +2086,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,
                                   instructions: instructions,
+                                  description: description,
                                   stock: stock,
                                   baselineTime: baselineTime,
                                   meridiem: meridiem,
@@ -2042,13 +2094,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrls: imgUrls,
                                   marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
-                                  estimatedSettlementDate:
+                                  /*                                   estimatedSettlementDate:
                                       _selectedDate != null
                                           ? DateFormat(
                                             'yyyy-MM-dd',
                                           ).format(_selectedDate!)
                                           : null,
-                                  estimatedSettlement: estimatedSettlement,
+                                  estimatedSettlement: estimatedSettlement, */
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
                                 );

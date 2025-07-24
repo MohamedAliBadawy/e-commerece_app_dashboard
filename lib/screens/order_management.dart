@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
@@ -9,8 +10,9 @@ import 'package:ecommerce_app_dashboard/models/refund_model.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
 import 'package:ecommerce_app_dashboard/services/order_service.dart';
 import 'package:ecommerce_app_dashboard/services/refund_service.dart';
+import 'package:excel/excel.dart' hide Border;
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
@@ -58,6 +60,80 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   Timer? _debounce;
   Map<String, String?> selectedManagerNames = {}; // orderId -> managerName
   final RefundService _refundService = RefundService();
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
+
+  Future<void> _downloadOrdersAsExcel() async {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('orders').get();
+
+    final excel = Excel.createExcel();
+    final sheet = excel['Sheet1'];
+
+    // Header row
+    sheet.appendRow([
+      TextCellValue('주문 ID'),
+      TextCellValue('수취인'),
+      TextCellValue('Phone'),
+      TextCellValue('주소'),
+      TextCellValue('배송 요청사항'),
+      TextCellValue('제품'),
+      TextCellValue('수량'),
+      TextCellValue('Supply price'),
+      TextCellValue('Delivery price'),
+      TextCellValue('Shipping fee'),
+      TextCellValue('택배사'),
+      TextCellValue('운송장 번호'),
+    ]);
+
+    for (var doc in querySnapshot.docs) {
+      final order = MyOrder.fromDocument(doc.data());
+
+      // Fetch user and product info
+      final userSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(order.userId)
+              .get();
+      final user =
+          userSnapshot.exists
+              ? User.fromDocument(userSnapshot.data() as Map<String, dynamic>)
+              : null;
+
+      final productSnapshot =
+          await FirebaseFirestore.instance
+              .collection('products')
+              .doc(order.productId)
+              .get();
+      final product =
+          productSnapshot.exists
+              ? Product.fromMap(productSnapshot.data() as Map<String, dynamic>)
+              : null;
+
+      sheet.appendRow([
+        TextCellValue(order.orderId),
+        TextCellValue(user?.name ?? ''),
+        TextCellValue(order.phoneNo),
+        TextCellValue(order.deliveryAddress),
+        TextCellValue(order.deliveryInstructions),
+        TextCellValue(product?.productName ?? ''),
+        TextCellValue(order.quantity.toString()),
+        TextCellValue(product?.supplyPrice?.toString() ?? ''),
+        TextCellValue(product?.deliveryPrice?.toString() ?? ''),
+        TextCellValue(product?.shippingFee?.toString() ?? ''),
+        TextCellValue(order.courier),
+        TextCellValue(order.trackingNumber),
+      ]);
+    }
+
+    final fileBytes = excel.encode();
+    if (fileBytes != null) {
+      await FileSaver.instance.saveFile(
+        name: 'orders.xlsx',
+        bytes: Uint8List.fromList(fileBytes),
+      );
+    }
+  }
 
   Stream<QuerySnapshot> getOrdersStream(String query) {
     if (query.isEmpty) {
@@ -105,9 +181,31 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
     super.dispose();
   }
 
@@ -183,9 +281,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         children: [
           Text(
             'Order Management',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -201,7 +299,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                         hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                       onChanged: _onSearchChanged,
                     ),
@@ -211,11 +309,29 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
             ],
           ),
           SizedBox(height: 24),
-          DefaultTabController(
-            length: 3,
-            child: Column(
-              children: [
-                TabBar(
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0),
+              ),
+              minimumSize: Size(110, 40),
+            ),
+            onPressed: _downloadOrdersAsExcel,
+            child: Text('Download Orders as Excel'),
+          ),
+          SizedBox(height: 24),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+
+            child: SizedBox(
+              width: 1600,
+
+              child: DefaultTabController(
+                length: 3,
+                child: TabBar(
                   labelColor: Colors.black,
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.transparent,
@@ -230,17 +346,14 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     });
                   },
                 ),
-              ],
+              ),
             ),
           ),
-          Expanded(
-            child:
-                _currentTabIndex == 0
-                    ? _buildOrdersTable()
-                    : _currentTabIndex == 1
-                    ? _buildRefundRequestsTable()
-                    : _buildExchangeRequestsTable(),
-          ),
+          _currentTabIndex == 0
+              ? _buildOrdersTable()
+              : _currentTabIndex == 1
+              ? _buildRefundRequestsTable()
+              : _buildExchangeRequestsTable(),
           /*         Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -317,14 +430,46 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         ),
         child: Column(
           children: [
-            // Table header
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _headerScrollController,
+              child: Container(
+                width: 1600,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.black),
+                    left: BorderSide(color: Colors.black),
+                    right: BorderSide(color: Colors.black),
+                    top: BorderSide(color: Colors.black),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildHeaderCell('상품', flex: 2, hasRightBorder: true),
+                    _buildHeaderCell('주문 번호', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('사용자', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('사용자 ID', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('주소', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('가격', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('사유', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell(
+                      '',
+                      flex: 1,
+                      hasRightBorder: false,
+                    ), // last cell, no border
+                  ],
+                ),
+              ),
+            ),
+
+            /*             // Table header
             Container(
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
               ),
               child: Row(
                 children: [
-                  _buildTableHeader('상품', 2),
+                        _buildTableHeader('상품', 1),
                   _buildTableHeader('주문 번호', 1),
                   _buildTableHeader('배송 관리자', 2),
                   _buildTableHeader('기준 시간', 1),
@@ -333,7 +478,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   _buildTableHeader('선택', 1),
                 ],
               ),
-            ),
+            ), */
             // Table body
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -354,14 +499,21 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   if (orders.isEmpty) {
                     return Center(child: Text('주문이 없습니다'));
                   }
-                  return ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      final order = MyOrder.fromDocument(
-                        orders[index].data() as Map<String, dynamic>,
-                      );
-                      return _buildOrderRow(order);
-                    },
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _bodyScrollController,
+                    child: SizedBox(
+                      width: 1600,
+                      child: ListView.builder(
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final order = MyOrder.fromDocument(
+                            orders[index].data() as Map<String, dynamic>,
+                          );
+                          return _buildOrderRow(order);
+                        },
+                      ),
+                    ),
                   );
                 },
               ),
@@ -498,6 +650,27 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     );
   }
 
+  // Add to the same file or a utils file
+  Widget _buildHeaderCell(
+    String title, {
+    int flex = 1,
+    bool hasRightBorder = true,
+  }) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          border:
+              hasRightBorder
+                  ? Border(right: BorderSide(color: Colors.black))
+                  : null,
+        ),
+        child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
   Widget _buildTableHeader(String title, int flex) {
     return Expanded(
       flex: flex,
@@ -505,6 +678,13 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
       ),
+    );
+  }
+
+  Widget _buildNewTableHeader(String title, int flex) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
@@ -549,14 +729,24 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.blue.withOpacity(0.1) : null,
 
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            border: Border(
+              bottom: BorderSide(color: Colors.black),
+              top: BorderSide(color: Colors.black),
+              left: BorderSide(color: Colors.black),
+              right: BorderSide(color: Colors.black),
+            ),
           ),
           child: Row(
             children: [
               Expanded(
                 flex: 2,
-                child: Padding(
+                child: Container(
+                  height: 50,
+
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
                   child: Row(
                     children: [
                       product.imgUrl != null
@@ -571,7 +761,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             height: 50,
                             color: Colors.grey.shade300,
                           ),
-                      SizedBox(width: 16.w),
+                      SizedBox(width: 16),
                       Flexible(child: Text(product.productName)),
                     ],
                   ),
@@ -579,8 +769,13 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               ),
               Expanded(
                 flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  height: 50,
+
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
                   child: Text(order.orderId),
                 ),
               ),
@@ -588,59 +783,96 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 flex: 2,
                 child:
                     selectedManagerNames[order.orderId] != null
-                        ? Text(
-                          deliveryManagerNames
-                              .firstWhere(
-                                (manager) =>
-                                    manager.userId ==
-                                    selectedManagerNames[order.orderId],
-                              )
-                              .name,
-                          style: TextStyle(fontSize: 16),
+                        ? Container(
+                          height: 50,
+
+                          decoration: BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          child: Text(
+                            deliveryManagerNames
+                                .firstWhere(
+                                  (manager) =>
+                                      manager.userId ==
+                                      selectedManagerNames[order.orderId],
+                                )
+                                .name,
+                            style: TextStyle(fontSize: 16),
+                          ),
                         )
-                        : Text('널', style: TextStyle(color: Colors.grey)),
+                        : Container(
+                          height: 50,
+
+                          decoration: BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          child: Text(
+                            '널',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
               ),
+
               Expanded(
                 flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(product.baselineTime.toString()),
                 ),
               ),
               Expanded(
                 flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(product.stock.toString()),
                 ),
               ),
               Expanded(
                 flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(order.trackingNumber),
                 ),
               ),
               Expanded(
                 child: IconButton(
                   onPressed: () async {
-                    _showLoadingDialog(context);
-                    order.deliveryManagerId =
-                        selectedManagerNames[order.orderId]!;
-                    order.deliveryManager =
-                        deliveryManagerNames
-                            .firstWhere(
-                              (name) =>
-                                  name.userId ==
-                                  selectedManagerNames[order.orderId]!,
-                            )
-                            .name;
-                    await _orderService.updateOrder(order);
-
-                    Navigator.of(context, rootNavigator: true).pop();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('완료')));
+                    /*                         _showLoadingDialog(context);
+                      order.deliveryManagerId =
+                          selectedManagerNames[order.orderId]!;
+                      order.deliveryManager =
+                          deliveryManagerNames
+                              .firstWhere(
+                                (name) =>
+                                    name.userId ==
+                                    selectedManagerNames[order.orderId]!,
+                              )
+                              .name;
+                      await _orderService.updateOrder(order);
+                  
+                      Navigator.of(context, rootNavigator: true).pop();
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('완료'))); */
                   },
                   icon: Icon(Icons.edit),
                 ),
@@ -706,7 +938,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      Expanded(
+                      Flexible(
                         child: FutureBuilder(
                           future:
                               FirebaseFirestore.instance
@@ -740,7 +972,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                       height: 50,
                                       color: Colors.grey.shade300,
                                     ),
-                                SizedBox(width: 16.w),
+                                SizedBox(width: 16),
                                 Flexible(child: Text(product.productName)),
                               ],
                             );
@@ -901,7 +1133,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      Expanded(
+                      Flexible(
                         child: FutureBuilder(
                           future:
                               FirebaseFirestore.instance
@@ -935,7 +1167,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                       height: 50,
                                       color: Colors.grey.shade300,
                                     ),
-                                SizedBox(width: 16.w),
+                                SizedBox(width: 16),
                                 Flexible(child: Text(product.productName)),
                               ],
                             );

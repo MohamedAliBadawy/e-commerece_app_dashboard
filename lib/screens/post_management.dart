@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/post_model.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PostManagementScreen extends StatefulWidget {
   const PostManagementScreen({super.key});
@@ -76,9 +75,9 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
         children: [
           Text(
             '게시글 관리',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -94,12 +93,29 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                         hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                       onChanged: _onSearchChanged,
                     ),
                   ),
                 ),
+              ),
+              SizedBox(width: 16),
+              TextButton(
+                onPressed: () {
+                  /*    if (widget.onSubPageRequested != null) {
+                    widget.onSubPageRequested!(ReportedUsersScreen());
+                  } */
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                child: Text('신고된 사용자', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),
@@ -121,6 +137,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
             ],
           ),
           SizedBox(height: 8),
+
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -176,7 +193,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                             );
                             return Container(
                               width: double.infinity,
-                              height: 100.h,
+                              height: 100,
                               decoration: BoxDecoration(
                                 border: Border(
                                   left: BorderSide(color: Colors.grey.shade300),
@@ -196,13 +213,13 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                   Expanded(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0.w,
+                                        horizontal: 16.0,
                                       ),
                                       child:
                                           post.imgUrl.isNotEmpty
                                               ? Container(
-                                                width: 100.w,
-                                                height: 55.h,
+                                                width: 100,
+                                                height: 55,
                                                 decoration: ShapeDecoration(
                                                   image: DecorationImage(
                                                     image: NetworkImage(
@@ -224,7 +241,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                   Expanded(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0.w,
+                                        horizontal: 16.0,
                                       ),
                                       child: Text(post.text),
                                     ),
@@ -232,7 +249,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                   Expanded(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0.w,
+                                        horizontal: 16.0,
                                       ),
                                       child: FutureBuilder(
                                         future:
@@ -260,7 +277,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                   Expanded(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0.w,
+                                        horizontal: 16.0,
                                       ),
                                       child: Text(post.formattedCreatedAt),
                                     ),

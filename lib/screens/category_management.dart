@@ -1,7 +1,6 @@
 import 'package:ecommerce_app_dashboard/models/category_model.dart';
 import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   @override
@@ -129,9 +128,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         children: [
           Text(
             '카테고리 관리',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -148,7 +147,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       hintText: '검색',
                       prefixIcon: Icon(Icons.search),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                     ),
                     onChanged: _filterCategories, // Use the correct function
                   ),

@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
 import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DeliveryManagerManagementScreen extends StatefulWidget {
   const DeliveryManagerManagementScreen({super.key});
@@ -24,6 +23,28 @@ class _DeliveryManagerManagementScreenState
 
   final List<DeliveryManager> _selectedDeliveryManagers = [];
   Timer? _debounce;
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
 
   Stream<QuerySnapshot> getDeliveryManagersStream(String query) {
     if (query.isEmpty) {
@@ -76,6 +97,9 @@ class _DeliveryManagerManagementScreenState
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
+    super.dispose();
     super.dispose();
   }
 
@@ -88,9 +112,9 @@ class _DeliveryManagerManagementScreenState
         children: [
           Text(
             '배송 관리자 관리',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -106,7 +130,7 @@ class _DeliveryManagerManagementScreenState
                         hintText: '검색',
                         prefixIcon: Icon(Icons.search),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                       onChanged: _onSearchChanged,
                     ),
@@ -170,20 +194,25 @@ class _DeliveryManagerManagementScreenState
               child: Column(
                 children: [
                   // Table header
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _headerScrollController,
+                    child: Container(
+                      width: 1600, // adjust to fit all columns
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildTableHeader('이름', 1),
-                        _buildTableHeader('이메일', 2),
-                        _buildTableHeader('전화번호', 2),
-                        _buildTableHeader('카톡/이메일', 2),
-                        _buildTableHeader('', 1),
-                      ],
+                      child: Row(
+                        children: [
+                          _buildTableHeader('이름', 1),
+                          _buildTableHeader('이메일', 2),
+                          _buildTableHeader('전화번호', 2),
+                          _buildTableHeader('카톡/이메일', 2),
+                          _buildTableHeader('', 1),
+                        ],
+                      ),
                     ),
                   ),
                   // Table body
@@ -205,16 +234,25 @@ class _DeliveryManagerManagementScreenState
                         if (deliveryManagers.isEmpty) {
                           return Center(child: Text('배송 관리자가 없습니다'));
                         }
-                        return ListView.builder(
-                          itemCount: deliveryManagers.length,
-                          itemBuilder: (context, index) {
-                            final deliveryManager =
-                                DeliveryManager.fromDocument(
-                                  deliveryManagers[index].data()
-                                      as Map<String, dynamic>,
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          controller: _bodyScrollController,
+                          child: SizedBox(
+                            width: 1600,
+                            child: ListView.builder(
+                              itemCount: deliveryManagers.length,
+                              itemBuilder: (context, index) {
+                                final deliveryManager =
+                                    DeliveryManager.fromDocument(
+                                      deliveryManagers[index].data()
+                                          as Map<String, dynamic>,
+                                    );
+                                return _buildDeliveryManagerRow(
+                                  deliveryManager,
                                 );
-                            return _buildDeliveryManagerRow(deliveryManager);
-                          },
+                              },
+                            ),
+                          ),
                         );
                       },
                     ),

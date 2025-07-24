@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 
 class ResponsiveService {
   static bool isMobile(BuildContext context) =>
-      MediaQuery.of(context).size.width < 650;
+      MediaQuery.of(context).size.width < 800;
 
   static bool isTablet(BuildContext context) =>
-      MediaQuery.of(context).size.width >= 650 &&
+      MediaQuery.of(context).size.width >= 800 &&
       MediaQuery.of(context).size.width < 1100;
 
   static bool isDesktop(BuildContext context) =>

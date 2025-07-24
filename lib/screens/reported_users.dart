@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ReportedUsersScreen extends StatefulWidget {
   const ReportedUsersScreen({super.key});
@@ -34,9 +33,9 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
         children: [
           Text(
             'Reported Users',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Flexible(
             child: StreamBuilder<QuerySnapshot>(
               stream:
@@ -50,19 +49,16 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                 }
                 final reportedUsers = snapshot.data!.docs;
                 return Padding(
-                  padding: EdgeInsets.only(left: 70.w),
+                  padding: EdgeInsets.only(left: 70),
                   child: Text(
                     '${reportedUsers.length}',
-                    style: TextStyle(
-                      fontSize: 50.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
                   ),
                 );
               },
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
@@ -75,13 +71,13 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                   hintText: 'Search',
                   prefixIcon: Icon(Icons.search),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 onChanged: _onSearchChanged,
               ),
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
@@ -94,111 +90,125 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                   return Center(child: Text('No reported users found'));
                 }
                 final reportedUsers = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: reportedUsers.length,
-                  itemBuilder: (context, index) {
-                    final report = reportedUsers[index];
-                    return FutureBuilder(
-                      future: Future.wait([
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(report['reportedUserId'])
-                            .get(),
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(report['reportingUserId'])
-                            .get(),
-                      ]),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
-                        if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No reported users found'));
-                        }
-                        final reportedUser = snapshot.data![0].data()!;
-                        final reportingUser = snapshot.data![1].data()!;
-                        if (_searchQuery.isNotEmpty &&
-                            !(reportedUser['name']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportedUser['userId']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportingUser['name']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportingUser['userId']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery))) {
-                          return SizedBox.shrink();
-                        }
-                        return Container(
-                          width: double.infinity,
-                          height: 100.h,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              left: BorderSide(color: Colors.grey.shade300),
-                              right: BorderSide(color: Colors.grey.shade300),
-                              top: BorderSide(color: Colors.grey.shade300),
-                              bottom: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 56.w,
-                                    height: 55.h,
-                                    decoration: ShapeDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          reportedUser['url'],
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                                      shape: OvalBorder(),
-                                    ),
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+
+                  child: SizedBox(
+                    width: 1600, // match header width
+                    child: ListView.builder(
+                      itemCount: reportedUsers.length,
+                      itemBuilder: (context, index) {
+                        final report = reportedUsers[index];
+                        return FutureBuilder(
+                          future: Future.wait([
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(report['reportedUserId'])
+                                .get(),
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(report['reportingUserId'])
+                                .get(),
+                          ]),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            }
+                            if (!snapshot.hasData || snapshot.data == null) {
+                              return Center(
+                                child: Text('No reported users found'),
+                              );
+                            }
+                            final reportedUser = snapshot.data![0].data()!;
+                            final reportingUser = snapshot.data![1].data()!;
+                            if (_searchQuery.isNotEmpty &&
+                                !(reportedUser['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportedUser['userId']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportingUser['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportingUser['userId']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery))) {
+                              return SizedBox.shrink();
+                            }
+                            return Container(
+                              width: double.infinity,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: Colors.grey.shade300),
+                                  right: BorderSide(
+                                    color: Colors.grey.shade300,
                                   ),
-                                  subtitle: Text('${reportedUser['userId']}'),
-                                  title: Text('${reportedUser['name']}'),
+                                  top: BorderSide(color: Colors.grey.shade300),
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 16.w),
-                              Flexible(child: Text('Reported by')),
-                              SizedBox(width: 16.w),
-                              Expanded(
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 56.w,
-                                    height: 55.h,
-                                    decoration: ShapeDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          reportingUser['url'],
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: ListTile(
+                                      leading: Container(
+                                        width: 56,
+                                        height: 55,
+                                        decoration: ShapeDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(
+                                              reportedUser['url'],
+                                            ),
+                                            fit: BoxFit.cover,
+                                          ),
+                                          shape: OvalBorder(),
                                         ),
-                                        fit: BoxFit.cover,
                                       ),
-                                      shape: OvalBorder(),
+                                      subtitle: Text(
+                                        '${reportedUser['userId']}',
+                                      ),
+                                      title: Text('${reportedUser['name']}'),
                                     ),
                                   ),
-                                  subtitle: Text('${reportingUser['userId']}'),
-                                  title: Text('${reportingUser['name']}'),
-                                ),
+                                  Expanded(child: Text('Reported by')),
+                                  Expanded(
+                                    child: ListTile(
+                                      leading: Container(
+                                        width: 56,
+                                        height: 55,
+                                        decoration: ShapeDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(
+                                              reportingUser['url'],
+                                            ),
+                                            fit: BoxFit.cover,
+                                          ),
+                                          shape: OvalBorder(),
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${reportingUser['userId']}',
+                                      ),
+                                      title: Text('${reportingUser['name']}'),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 );
               },
             ),

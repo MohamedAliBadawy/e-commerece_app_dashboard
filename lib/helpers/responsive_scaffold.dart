@@ -24,8 +24,8 @@ class ResponsiveScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 650;
-    final isTablet = screenWidth >= 650 && screenWidth < 1100;
+    final isMobile = screenWidth < 800;
+    final isTablet = screenWidth >= 800 && screenWidth < 1100;
     final isDesktop = screenWidth >= 1100;
 
     // Wrap the body with responsive padding and constraints

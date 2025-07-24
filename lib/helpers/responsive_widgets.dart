@@ -18,7 +18,7 @@ class ResponsiveRowColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 650;
+    final isMobile = MediaQuery.of(context).size.width < 800;
 
     if (isMobile) {
       return Column(
@@ -99,7 +99,7 @@ class ResponsiveContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 650;
+    final isMobile = screenWidth < 800;
 
     // Adjust padding for mobile
     EdgeInsetsGeometry responsivePadding = padding ?? EdgeInsets.all(24.0);
