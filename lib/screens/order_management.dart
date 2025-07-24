@@ -534,21 +534,29 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         child: Column(
           children: [
             // Table header
-            Container(
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-              ),
-              child: Row(
-                children: [
-                  _buildTableHeader('상품', 2),
-                  _buildTableHeader('주문 번호', 1),
-                  _buildTableHeader('사용자', 1),
-                  _buildTableHeader('사용자 ID', 1),
-                  _buildTableHeader('주소', 1),
-                  _buildTableHeader('가격', 1),
-                  _buildTableHeader('사유', 1),
-                  _buildTableHeader('', 1),
-                ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _headerScrollController,
+              child: Container(
+                width: 1600,
+
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildTableHeader('상품', 2),
+                    _buildTableHeader('주문 번호', 1),
+                    _buildTableHeader('사용자', 1),
+                    _buildTableHeader('사용자 ID', 1),
+                    _buildTableHeader('주소', 1),
+                    _buildTableHeader('가격', 1),
+                    _buildTableHeader('사유', 1),
+                    _buildTableHeader('', 1),
+                  ],
+                ),
               ),
             ),
             // Table body
@@ -572,12 +580,21 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     return Center(child: Text('주문이 없습니다'));
                   }
                   print(orders.first.data());
-                  return ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      final data = orders[index].data() as Map<String, dynamic>;
-                      return _buildRefundRow(Refund.fromDocument(data));
-                    },
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _bodyScrollController,
+                    child: SizedBox(
+                      width: 1600,
+
+                      child: ListView.builder(
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              orders[index].data() as Map<String, dynamic>;
+                          return _buildRefundRow(Refund.fromDocument(data));
+                        },
+                      ),
+                    ),
                   );
                 },
               ),
@@ -598,21 +615,28 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         child: Column(
           children: [
             // Table header
-            Container(
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-              ),
-              child: Row(
-                children: [
-                  _buildTableHeader('상품', 2),
-                  _buildTableHeader('주문 번호', 1),
-                  _buildTableHeader('사용자', 1),
-                  _buildTableHeader('사용자 ID', 1),
-                  _buildTableHeader('주소', 1),
-                  _buildTableHeader('가격', 1),
-                  _buildTableHeader('사유', 1),
-                  _buildTableHeader('', 1),
-                ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _headerScrollController,
+              child: Container(
+                width: 1600,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _buildTableHeader('상품', 2),
+                    _buildTableHeader('주문 번호', 1),
+                    _buildTableHeader('사용자', 1),
+                    _buildTableHeader('사용자 ID', 1),
+                    _buildTableHeader('주소', 1),
+                    _buildTableHeader('가격', 1),
+                    _buildTableHeader('사유', 1),
+                    _buildTableHeader('', 1),
+                  ],
+                ),
               ),
             ),
             // Table body
@@ -632,14 +656,21 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   if (orders.isEmpty) {
                     return Center(child: Text('주문이 없습니다'));
                   }
-                  return ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      final order = MyOrder.fromDocument(
-                        orders[index].data() as Map<String, dynamic>,
-                      );
-                      return _buildOrderRow(order);
-                    },
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _bodyScrollController,
+                    child: SizedBox(
+                      width: 1600,
+                      child: ListView.builder(
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final order = MyOrder.fromDocument(
+                            orders[index].data() as Map<String, dynamic>,
+                          );
+                          return _buildOrderRow(order);
+                        },
+                      ),
+                    ),
                   );
                 },
               ),
@@ -780,7 +811,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ),
               ),
               Expanded(
-                flex: 2,
+                flex: 1,
                 child:
                     selectedManagerNames[order.orderId] != null
                         ? Container(
@@ -816,7 +847,43 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                           ),
                         ),
               ),
+              Expanded(
+                flex: 1,
+                child:
+                    selectedManagerNames[order.orderId] != null
+                        ? Container(
+                          height: 50,
 
+                          decoration: BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          child: Text(
+                            deliveryManagerNames
+                                .firstWhere(
+                                  (manager) =>
+                                      manager.userId ==
+                                      selectedManagerNames[order.orderId],
+                                )
+                                .userId,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        )
+                        : Container(
+                          height: 50,
+
+                          decoration: BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          child: Text(
+                            '널',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+              ),
               Expanded(
                 flex: 1,
                 child: Container(

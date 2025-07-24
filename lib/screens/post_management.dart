@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/post_model.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
+import 'package:ecommerce_app_dashboard/screens/reported_posts.dart';
 import 'package:flutter/material.dart';
 
 class PostManagementScreen extends StatefulWidget {
-  const PostManagementScreen({super.key});
+  final void Function(Widget subPage)? onSubPageRequested;
+
+  const PostManagementScreen({super.key, this.onSubPageRequested});
 
   @override
   State<PostManagementScreen> createState() => _PostManagementScreenState();
@@ -17,7 +20,8 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   final List<Post> _selectedPosts = [];
   Timer? _debounce;
-
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
   Stream<QuerySnapshot> getPostsStream(String query) {
     if (query.isEmpty) {
       return FirebaseFirestore.instance.collection('posts').snapshots();
@@ -60,9 +64,31 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
     super.dispose();
   }
 
@@ -103,9 +129,9 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
               SizedBox(width: 16),
               TextButton(
                 onPressed: () {
-                  /*    if (widget.onSubPageRequested != null) {
-                    widget.onSubPageRequested!(ReportedUsersScreen());
-                  } */
+                  if (widget.onSubPageRequested != null) {
+                    widget.onSubPageRequested!(ReportedPostsScreen());
+                  }
                 },
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -146,20 +172,25 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
               ),
               child: Column(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _headerScrollController,
+                    child: Container(
+                      width: 1600,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildTableHeader('이미지', 1),
-                        _buildTableHeader('내용', 1),
-                        _buildTableHeader('사용자', 1),
-                        _buildTableHeader('날짜', 1),
-                        _buildTableHeader('선택', 1),
-                      ],
+                      child: Row(
+                        children: [
+                          _buildTableHeader('이미지', 1),
+                          _buildTableHeader('내용', 1),
+                          _buildTableHeader('사용자', 1),
+                          _buildTableHeader('날짜', 1),
+                          _buildTableHeader('선택', 1),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -182,129 +213,140 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                         if (posts.isEmpty) {
                           return Center(child: Text('게시글이 없습니다'));
                         }
-                        return ListView.builder(
-                          itemCount: posts.length,
-                          itemBuilder: (context, index) {
-                            final post = Post.fromDocument(
-                              posts[index].data() as Map<String, dynamic>,
-                            );
-                            final isSelected = _selectedPosts.any(
-                              (p) => p.postId == post.postId,
-                            );
-                            return Container(
-                              width: double.infinity,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(color: Colors.grey.shade300),
-                                  right: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  top: BorderSide(color: Colors.grey.shade300),
-                                  bottom: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0,
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          controller: _bodyScrollController,
+                          child: SizedBox(
+                            width: 1600,
+                            child: ListView.builder(
+                              itemCount: posts.length,
+                              itemBuilder: (context, index) {
+                                final post = Post.fromDocument(
+                                  posts[index].data() as Map<String, dynamic>,
+                                );
+                                final isSelected = _selectedPosts.any(
+                                  (p) => p.postId == post.postId,
+                                );
+                                return Container(
+                                  width: double.infinity,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: Colors.grey.shade300,
                                       ),
-                                      child:
-                                          post.imgUrl.isNotEmpty
-                                              ? Container(
-                                                width: 100,
-                                                height: 55,
-                                                decoration: ShapeDecoration(
-                                                  image: DecorationImage(
-                                                    image: NetworkImage(
-                                                      post.imgUrl,
-                                                    ),
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          0,
+                                      right: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                      top: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                      bottom: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                          child:
+                                              post.imgUrl.isNotEmpty
+                                                  ? Container(
+                                                    width: 100,
+                                                    height: 55,
+                                                    decoration: ShapeDecoration(
+                                                      image: DecorationImage(
+                                                        image: NetworkImage(
+                                                          post.imgUrl,
                                                         ),
-                                                  ),
-                                                ),
-                                              )
-                                              : Text('이미지 없음'),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
-                                      child: Text(post.text),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
-                                      child: FutureBuilder(
-                                        future:
-                                            FirebaseFirestore.instance
-                                                .collection('users')
-                                                .doc(post.userId)
-                                                .get(),
-                                        builder: (context, snapshot) {
-                                          if (!snapshot.hasData ||
-                                              snapshot.data == null) {
-                                            return Center(
-                                              child: Text('유저를 찾을 수 없습니다'),
-                                            );
-                                          }
-
-                                          final user = User.fromDocument(
-                                            snapshot.data!.data()
-                                                as Map<String, dynamic>,
-                                          );
-                                          return Text(user.name);
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
-                                      child: Text(post.formattedCreatedAt),
-                                    ),
-                                  ),
-
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Checkbox(
-                                          value: isSelected,
-                                          onChanged: (value) {
-                                            if (isSelected) {
-                                              _deselectPost(post);
-                                            } else {
-                                              _selectPost(post);
-                                            }
-                                          },
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              0,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  : Text('이미지 없음'),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                          child: Text(post.text),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                          child: FutureBuilder(
+                                            future:
+                                                FirebaseFirestore.instance
+                                                    .collection('users')
+                                                    .doc(post.userId)
+                                                    .get(),
+                                            builder: (context, snapshot) {
+                                              if (!snapshot.hasData ||
+                                                  snapshot.data == null) {
+                                                return Center(
+                                                  child: Text('유저를 찾을 수 없습니다'),
+                                                );
+                                              }
+
+                                              final user = User.fromDocument(
+                                                snapshot.data!.data()
+                                                    as Map<String, dynamic>,
+                                              );
+                                              return Text(user.name);
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                          child: Text(post.formattedCreatedAt),
+                                        ),
+                                      ),
+
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Checkbox(
+                                              value: isSelected,
+                                              onChanged: (value) {
+                                                if (isSelected) {
+                                                  _deselectPost(post);
+                                                } else {
+                                                  _selectPost(post);
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            );
-                          },
+                                );
+                              },
+                            ),
+                          ),
                         );
                       },
                     ),

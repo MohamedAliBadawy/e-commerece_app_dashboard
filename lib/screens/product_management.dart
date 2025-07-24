@@ -62,6 +62,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   final List<Product> _selectedProducts = [];
   Timer? _debounce;
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
 
   Stream<QuerySnapshot> getProductsStream(String query) {
     if (query.isEmpty) {
@@ -108,9 +110,31 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
     super.dispose();
   }
 
@@ -201,23 +225,28 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               child: Column(
                 children: [
                   // Table header
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _headerScrollController,
+                    child: Container(
+                      width: 1600,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade300),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildTableHeader('이미지', 1),
-                        _buildTableHeader('상품명', 2),
-                        _buildTableHeader('상품 설명', 2),
-                        _buildTableHeader('재고', 1),
-                        _buildTableHeader('기준 시간', 1),
-                        _buildTableHeader('판매자', 1),
-                        _buildTableHeader('가격', 1),
-                        _buildTableHeader('선택', 1),
-                      ],
+                      child: Row(
+                        children: [
+                          _buildTableHeader('이미지', 1),
+                          _buildTableHeader('상품명', 2),
+                          _buildTableHeader('상품 설명', 2),
+                          _buildTableHeader('재고', 1),
+                          _buildTableHeader('기준 시간', 1),
+                          _buildTableHeader('판매자', 1),
+                          _buildTableHeader('가격', 1),
+                          _buildTableHeader('선택', 1),
+                        ],
+                      ),
                     ),
                   ),
                   // Table body
@@ -239,14 +268,23 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                         if (products.isEmpty) {
                           return Center(child: Text('No products found'));
                         }
-                        return ListView.builder(
-                          itemCount: products.length,
-                          itemBuilder: (context, index) {
-                            final product = Product.fromMap(
-                              products[index].data() as Map<String, dynamic>,
-                            );
-                            return _buildProductRow(product);
-                          },
+                        return SingleChildScrollView(
+                          controller: _bodyScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: 1600,
+
+                            child: ListView.builder(
+                              itemCount: products.length,
+                              itemBuilder: (context, index) {
+                                final product = Product.fromMap(
+                                  products[index].data()
+                                      as Map<String, dynamic>,
+                                );
+                                return _buildProductRow(product);
+                              },
+                            ),
+                          ),
                         );
                       },
                     ),

@@ -54,7 +54,13 @@ class _AdminPageState extends State<AdminPage> {
       ),
       DeliveryManagerManagementScreen(),
       OrderManagementScreen(),
-      PostManagementScreen(),
+      PostManagementScreen(
+        onSubPageRequested: (subPage) {
+          setState(() {
+            _currentSubPage = subPage;
+          });
+        },
+      ),
       ProductManagementScreen(),
       CategoryManagementScreen(),
       PlaceholderEditorScreen(),

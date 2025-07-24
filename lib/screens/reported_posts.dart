@@ -16,7 +16,8 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final List<Post> _selectedPosts = [];
   Timer? _debounce;
-
+  late final ScrollController _headerScrollController;
+  late final ScrollController _bodyScrollController;
   void _selectPost(Post post) {
     setState(() {
       if (!_selectedPosts.any((p) => p.postId == post.postId)) {
@@ -126,6 +127,35 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _headerScrollController = ScrollController();
+    _bodyScrollController = ScrollController();
+
+    _headerScrollController.addListener(() {
+      if (_bodyScrollController.hasClients &&
+          _bodyScrollController.offset != _headerScrollController.offset) {
+        _bodyScrollController.jumpTo(_headerScrollController.offset);
+      }
+    });
+    _bodyScrollController.addListener(() {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _bodyScrollController.offset) {
+        _headerScrollController.jumpTo(_bodyScrollController.offset);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _headerScrollController.dispose();
+    _bodyScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -196,6 +226,26 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
               ),
             ],
           ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            controller: _headerScrollController,
+            child: Container(
+              width: 1600,
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+              ),
+              child: Row(
+                children: [
+                  _buildTableHeader('이미지', 1),
+                  _buildTableHeader('내용', 1),
+                  _buildTableHeader('사용자', 1),
+                  _buildTableHeader('날짜', 1),
+                  _buildTableHeader('reported by', 1),
+                  _buildTableHeader('', 1),
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
@@ -208,115 +258,205 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                   return Center(child: Text('No reported users found'));
                 }
                 final reportedUsers = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: reportedUsers.length,
-                  itemBuilder: (context, index) {
-                    final report = reportedUsers[index];
-                    return FutureBuilder(
-                      future: Future.wait([
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(report['reportedUserId'])
-                            .get(),
-                        FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(report['reportingUserId'])
-                            .get(),
-                        FirebaseFirestore.instance
-                            .collection('posts')
-                            .doc(report['postId'])
-                            .get(),
-                      ]),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
-                        if (!snapshot.hasData || snapshot.data == null) {
-                          return Center(child: Text('No reported users found'));
-                        }
-                        final reportedUser = snapshot.data![0].data()!;
-                        final reportingUser = snapshot.data![1].data()!;
-                        if (_searchQuery.isNotEmpty &&
-                            !(reportedUser['name']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportedUser['userId']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportingUser['name']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery) ||
-                                reportingUser['userId']
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(_searchQuery))) {
-                          return SizedBox.shrink();
-                        }
-                        return Container(
-                          width: double.infinity,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              left: BorderSide(color: Colors.grey.shade300),
-                              right: BorderSide(color: Colors.grey.shade300),
-                              top: BorderSide(color: Colors.grey.shade300),
-                              bottom: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 56,
-                                    height: 55,
-                                    decoration: ShapeDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          reportedUser['url'],
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                                      shape: OvalBorder(),
-                                    ),
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  controller: _bodyScrollController,
+                  child: SizedBox(
+                    width: 1600,
+                    child: ListView.builder(
+                      itemCount: reportedUsers.length,
+                      itemBuilder: (context, index) {
+                        final report = reportedUsers[index];
+                        return FutureBuilder(
+                          future: Future.wait([
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(report['reportedUserId'])
+                                .get(),
+                            FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(report['reportingUserId'])
+                                .get(),
+                            FirebaseFirestore.instance
+                                .collection('posts')
+                                .doc(report['postId'])
+                                .get(),
+                          ]),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            }
+                            if (!snapshot.hasData || snapshot.data == null) {
+                              return Center(
+                                child: Text('No reported users found'),
+                              );
+                            }
+                            final reportedUser = snapshot.data![0].data()!;
+                            final reportingUser = snapshot.data![1].data()!;
+                            final post = Post.fromDocument(
+                              snapshot.data![2].data()!,
+                            );
+                            final isSelected = _selectedPosts.any(
+                              (p) => p.postId == post.postId,
+                            );
+                            if (_searchQuery.isNotEmpty &&
+                                !(reportedUser['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportedUser['userId']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportingUser['name']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    reportingUser['userId']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(_searchQuery) ||
+                                    post.text.toLowerCase().contains(
+                                      _searchQuery,
+                                    ))) {
+                              return SizedBox.shrink();
+                            }
+                            return Container(
+                              width: double.infinity,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: Colors.grey.shade300),
+                                  right: BorderSide(
+                                    color: Colors.grey.shade300,
                                   ),
-                                  subtitle: Text('${reportedUser['userId']}'),
-                                  title: Text('${reportedUser['name']}'),
+                                  top: BorderSide(color: Colors.grey.shade300),
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 16),
-                              Flexible(child: Text('Reported by')),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 56,
-                                    height: 55,
-                                    decoration: ShapeDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          reportingUser['url'],
-                                        ),
-                                        fit: BoxFit.cover,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
                                       ),
-                                      shape: OvalBorder(),
+                                      child:
+                                          post.imgUrl.isNotEmpty
+                                              ? Container(
+                                                width: 100,
+                                                height: 55,
+                                                decoration: ShapeDecoration(
+                                                  image: DecorationImage(
+                                                    image: NetworkImage(
+                                                      post.imgUrl,
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          0,
+                                                        ),
+                                                  ),
+                                                ),
+                                              )
+                                              : Text('이미지 없음'),
                                     ),
                                   ),
-                                  subtitle: Text('${reportingUser['userId']}'),
-                                  title: Text('${reportingUser['name']}'),
-                                ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: Text(post.text),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: ListTile(
+                                        leading: Container(
+                                          width: 56,
+                                          height: 55,
+                                          decoration: ShapeDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                reportedUser['url'],
+                                              ),
+                                              fit: BoxFit.cover,
+                                            ),
+                                            shape: OvalBorder(),
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          '${reportedUser['userId']}',
+                                        ),
+                                        title: Text('${reportedUser['name']}'),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: Text(post.formattedCreatedAt),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: ListTile(
+                                        leading: Container(
+                                          width: 56,
+                                          height: 55,
+                                          decoration: ShapeDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                reportingUser['url'],
+                                              ),
+                                              fit: BoxFit.cover,
+                                            ),
+                                            shape: OvalBorder(),
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          '${reportingUser['userId']}',
+                                        ),
+                                        title: Text('${reportingUser['name']}'),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        if (isSelected) {
+                                          _deselectPost(post);
+                                        } else {
+                                          _selectPost(post);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 );
               },
             ),
@@ -325,4 +465,14 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
       ),
     );
   }
+}
+
+Widget _buildTableHeader(String title, int flex) {
+  return Expanded(
+    flex: flex,
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+    ),
+  );
 }

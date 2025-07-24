@@ -131,71 +131,173 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    enabled: !_isReorderMode, // Disable search in reorder mode
-
-                    decoration: InputDecoration(
-                      hintText: '검색',
-                      prefixIcon: Icon(Icons.search),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+          MediaQuery.of(context).size.width < 800
+              ? Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    onChanged: _filterCategories, // Use the correct function
+                    child: TextField(
+                      controller: _searchController,
+                      enabled:
+                          !_isReorderMode, // Disable search in reorder mode
+
+                      decoration: InputDecoration(
+                        hintText: '검색',
+                        prefixIcon: Icon(Icons.search),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onChanged: _filterCategories, // Use the correct function
+                    ),
                   ),
-                ),
+                  SizedBox(height: 16),
+                  if (!_isReorderMode) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.add),
+                          label: Text('카테고리 추가'),
+                          onPressed: () => _showAddCategoryDialog(context),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.reorder),
+                          label: Text('순서 변경'),
+                          onPressed: _toggleReorderMode,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+
+                      children: [
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.save),
+                          label: Text('순서 저장'),
+                          onPressed: _saveOrder,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.cancel),
+                          label: Text('취소'),
+                          onPressed: _toggleReorderMode,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            backgroundColor: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              )
+              : Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        enabled:
+                            !_isReorderMode, // Disable search in reorder mode
+
+                        decoration: InputDecoration(
+                          hintText: '검색',
+                          prefixIcon: Icon(Icons.search),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onChanged:
+                            _filterCategories, // Use the correct function
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  if (!_isReorderMode) ...[
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.add),
+                      label: Text('카테고리 추가'),
+                      onPressed: () => _showAddCategoryDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.reorder),
+                      label: Text('순서 변경'),
+                      onPressed: _toggleReorderMode,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        backgroundColor: Colors.orange,
+                      ),
+                    ),
+                  ] else ...[
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.save),
+                      label: Text('순서 저장'),
+                      onPressed: _saveOrder,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.cancel),
+                      label: Text('취소'),
+                      onPressed: _toggleReorderMode,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        backgroundColor: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              SizedBox(width: 16),
-              if (!_isReorderMode) ...[
-                ElevatedButton.icon(
-                  icon: Icon(Icons.add),
-                  label: Text('카테고리 추가'),
-                  onPressed: () => _showAddCategoryDialog(context),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.reorder),
-                  label: Text('순서 변경'),
-                  onPressed: _toggleReorderMode,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    backgroundColor: Colors.orange,
-                  ),
-                ),
-              ] else ...[
-                ElevatedButton.icon(
-                  icon: Icon(Icons.save),
-                  label: Text('순서 저장'),
-                  onPressed: _saveOrder,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    backgroundColor: Colors.green,
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.cancel),
-                  label: Text('취소'),
-                  onPressed: _toggleReorderMode,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    backgroundColor: Colors.grey,
-                  ),
-                ),
-              ],
-            ],
-          ),
           SizedBox(height: 24),
           if (!_isReorderMode)
             Row(
