@@ -18,6 +18,7 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
   Timer? _debounce;
   late final ScrollController _headerScrollController;
   late final ScrollController _bodyScrollController;
+
   void _selectPost(Post post) {
     setState(() {
       if (!_selectedPosts.any((p) => p.postId == post.postId)) {
@@ -89,11 +90,25 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                 );
 
                 try {
-                  final CollectionReference postsCollection = FirebaseFirestore
-                      .instance
-                      .collection('posts');
+                  /*                   final postsCollection = FirebaseFirestore.instance.collection(
+                    'posts',
+                  ); */
+                  final reportsCollection = FirebaseFirestore.instance
+                      .collection('reports');
+
                   for (Post post in _selectedPosts) {
-                    await postsCollection.doc(post.postId).delete();
+                    // Delete the post
+                    /* await postsCollection.doc(post.postId).delete(); */
+
+                    // Delete all reports related to this post
+                    final reportsSnapshot =
+                        await reportsCollection
+                            .where('postId', isEqualTo: post.postId)
+                            .get();
+
+                    for (var doc in reportsSnapshot.docs) {
+                      await doc.reference.delete();
+                    }
                   }
                   // Clear selections
                   _clearSelections();
@@ -129,6 +144,7 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
   @override
   void initState() {
     super.initState();
+
     _headerScrollController = ScrollController();
     _bodyScrollController = ScrollController();
 
@@ -172,9 +188,6 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
               stream:
                   FirebaseFirestore.instance.collection('reports').snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('No reported posts found'));
                 }
@@ -251,9 +264,6 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
               stream:
                   FirebaseFirestore.instance.collection('reports').snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('No reported users found'));
                 }
@@ -283,10 +293,6 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                                 .get(),
                           ]),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            }
                             if (!snapshot.hasData || snapshot.data == null) {
                               return Center(
                                 child: Text('No reported users found'),

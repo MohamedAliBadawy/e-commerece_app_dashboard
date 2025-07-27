@@ -4,8 +4,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/category_model.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
+import 'package:ecommerce_app_dashboard/screens/address/address_search_dialog.dart';
 import 'package:ecommerce_app_dashboard/services/category_service.dart';
 import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
+import 'package:ecommerce_app_dashboard/services/kakao_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -436,6 +438,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
     String deliveryManagerId = '';
+    Map<String, dynamic> _address = {};
+    final TextEditingController _addressController = TextEditingController();
+
     DateTime? _selectedDate;
 
     bool _imagesLoading = false;
@@ -497,6 +502,27 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                       isLoadingDeliveryManagers = false;
                     });
                   });
+            }
+
+            void searchAddress() async {
+              final kakaoService = KakaoApiService(
+                apiKey: '772742afea4cfac8c58ed62cfa7d1777',
+              );
+
+              // Show a search dialog or navigate to a search screen
+              final result = await showDialog(
+                context: context,
+                builder:
+                    (context) =>
+                        AddressSearchDialog(kakaoService: kakaoService),
+              );
+
+              if (result != null) {
+                setDialogState(() {
+                  _addressController.text = result['address_name'];
+                  _address = result;
+                });
+              }
             }
 
             Future<void> _selectDate(BuildContext context) async {
@@ -1078,6 +1104,22 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           },
                         ),
                         SizedBox(height: 24),
+                        TextFormField(
+                          controller: _addressController,
+                          readOnly: true,
+                          onTap: searchAddress,
+                          decoration: InputDecoration(
+                            labelText: 'Administrative Region',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Administrative Region can not be empty';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 24),
+
                         Row(
                           children: [
                             Expanded(
@@ -1216,6 +1258,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrls: imgUrls,
                                   marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
+                                  address: _address,
                                   /*                                   estimatedSettlementDate: DateFormat(
                                     'yyyy-MM-dd',
                                   ).format(_selectedDate!),
@@ -1288,6 +1331,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     int supplyPrice = product.supplyPrice ?? 0;
     double marginRate = product.marginRate ?? 0;
     int shippingFee = product.shippingFee ?? 0;
+    Map<String, dynamic> _address = product.address ?? {};
+    final TextEditingController _addressController = TextEditingController(
+      text: product.address?['address_name'] ?? '',
+    );
     /*     int estimatedSettlement = product.estimatedSettlement ?? 0;
     DateTime? _selectedDate =
         product.estimatedSettlementDate != ''
@@ -1370,6 +1417,26 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                       isLoadingDeliveryManagers = false;
                     });
                   });
+            }
+            void searchAddress() async {
+              final kakaoService = KakaoApiService(
+                apiKey: '772742afea4cfac8c58ed62cfa7d1777',
+              );
+
+              // Show a search dialog or navigate to a search screen
+              final result = await showDialog(
+                context: context,
+                builder:
+                    (context) =>
+                        AddressSearchDialog(kakaoService: kakaoService),
+              );
+
+              if (result != null) {
+                setDialogState(() {
+                  _addressController.text = result['address_name'];
+                  _address = result;
+                });
+              }
             }
 
             // Function to pick main image
@@ -1938,6 +2005,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           },
                         ),
                         SizedBox(height: 24),
+                        TextFormField(
+                          controller: _addressController,
+                          readOnly: true,
+                          onTap: searchAddress,
+                          decoration: InputDecoration(
+                            labelText: 'Administrative Region',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Administrative Region can not be empty';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 24),
                         Row(
                           children: [
                             Expanded(
@@ -2132,6 +2214,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   imgUrls: imgUrls,
                                   marginRate: marginRate,
                                   deliveryManagerId: deliveryManagerId,
+                                  address: _address,
                                   /*                                   estimatedSettlementDate:
                                       _selectedDate != null
                                           ? DateFormat(

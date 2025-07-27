@@ -141,7 +141,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                child: Text('신고된 사용자', style: TextStyle(color: Colors.black)),
+                child: Text('보고 된 게시물', style: TextStyle(color: Colors.black)),
               ),
             ],
           ),
