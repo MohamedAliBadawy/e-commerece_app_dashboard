@@ -434,6 +434,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     int estimatedSettlement = 0;
     int baselineTime = 0;
     String meridiem = 'AM';
+    String arrivalDate = '';
     String? imgUrl;
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
@@ -1037,6 +1038,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: arrivalDate,
+                                decoration: InputDecoration(labelText: '배송일'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '배송일을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  arrivalDate = value!;
+                                },
+                              ),
+                            ),
                             /*  SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
@@ -1265,6 +1281,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   estimatedSettlement: estimatedSettlement, */
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
+                                  arrivalDate: arrivalDate,
                                 );
 
                                 // Save to Firestore
@@ -1326,6 +1343,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     int baselineTime = product.baselineTime;
     String meridiem = product.meridiem;
     String? imgUrl = product.imgUrl;
+    String? arrivalDate = product.arrivalDate ?? '';
     List<String?> imgUrls = List.from(product.imgUrls);
     int deliveryPrice = product.deliveryPrice ?? 0;
     int supplyPrice = product.supplyPrice ?? 0;
@@ -1335,6 +1353,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final TextEditingController _addressController = TextEditingController(
       text: product.address?['address_name'] ?? '',
     );
+
     /*     int estimatedSettlement = product.estimatedSettlement ?? 0;
     DateTime? _selectedDate =
         product.estimatedSettlementDate != ''
@@ -1934,6 +1953,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                 },
                               ),
                             ),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: arrivalDate,
+                                decoration: InputDecoration(labelText: '배송일'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '배송일을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  arrivalDate = value!;
+                                },
+                              ),
+                            ),
                             /* SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
@@ -2224,6 +2258,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   estimatedSettlement: estimatedSettlement, */
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
+                                  arrivalDate: arrivalDate,
                                 );
 
                                 // Update in Firestore

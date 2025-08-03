@@ -8,7 +8,12 @@ class DeliveryManager {
   String phone;
   String preferences;
   Timestamp? createdAt;
-
+  String subId;
+  String bankCodeStd;
+  String code;
+  String accountNum;
+  String accountHolderInfoType;
+  String accountHolderInfo;
   DeliveryManager({
     required this.userId,
     required this.email,
@@ -16,6 +21,12 @@ class DeliveryManager {
     required this.phone,
     required this.preferences,
     this.createdAt,
+    required this.subId,
+    required this.code,
+    required this.accountNum,
+    required this.accountHolderInfoType,
+    required this.accountHolderInfo,
+    required this.bankCodeStd,
   });
 
   Map<String, Object?> toDocument() {
@@ -25,6 +36,12 @@ class DeliveryManager {
       'name': name,
       'phone': phone,
       'preferences': preferences,
+      'subId': subId,
+      'bankCodeStd': bankCodeStd,
+      'code': code,
+      'accountNum': accountNum,
+      'accountHolderInfoType': accountHolderInfoType,
+      'accountHolderInfo': accountHolderInfo,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
     };
   }
@@ -36,6 +53,12 @@ class DeliveryManager {
       name: doc['name'],
       phone: doc['phone'],
       preferences: doc['preferences'],
+      subId: doc['subId'] ?? '',
+      bankCodeStd: doc['bankCodeStd'] ?? '',
+      code: doc['code'] ?? '',
+      accountNum: doc['accountNum'] ?? '',
+      accountHolderInfoType: doc['accountHolderInfoType'] ?? '0',
+      accountHolderInfo: doc['accountHolderInfo'] ?? '',
       createdAt: doc['createdAt'],
     );
   }

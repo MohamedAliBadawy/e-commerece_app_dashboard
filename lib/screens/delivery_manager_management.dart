@@ -4,6 +4,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
 import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+const List<Map<String, String>> banks = [
+  {'name': 'KDB산업은행', 'code': '002'},
+  {'name': 'IBK기업은행', 'code': '003'},
+  {'name': 'KB국민은행', 'code': '004'},
+  {'name': '수협은행(수협중앙회)', 'code': '007'},
+  {'name': 'NH농협은행', 'code': '011'},
+  {'name': '농협중앙회(단위농축협)', 'code': '012'},
+  {'name': '우리은행', 'code': '020'},
+  {'name': 'SC제일은행', 'code': '023'},
+  {'name': '한국씨티은행', 'code': '027'},
+  {'name': '대구은행', 'code': '031'},
+  {'name': '부산은행', 'code': '032'},
+  {'name': '광주은행', 'code': '034'},
+  {'name': '제주은행', 'code': '035'},
+  {'name': '전북은행', 'code': '037'},
+  {'name': '경남은행', 'code': '039'},
+  {'name': '하나은행', 'code': '081'},
+  {'name': '신한은행', 'code': '088'},
+  {'name': '케이뱅크', 'code': '089'},
+  {'name': '카카오뱅크', 'code': '090'},
+  {'name': '토스뱅크', 'code': '092'},
+];
 
 class DeliveryManagerManagementScreen extends StatefulWidget {
   const DeliveryManagerManagementScreen({super.key});
@@ -348,6 +372,12 @@ class _DeliveryManagerManagementScreenState
     String email = '';
     String phone = '';
     String preferences = '카톡';
+    String bankCodeStd = banks.first['code']!;
+    String uniqueCode = '';
+    String accountNum = '';
+    String accountHolderInfoType = '0'; // default to individual
+    String accountHolderInfo = '';
+    final uniqueCodeController = TextEditingController();
 
     // Actually show the dialog
     showDialog(
@@ -355,6 +385,15 @@ class _DeliveryManagerManagementScreenState
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            if (uniqueCode.isEmpty) {
+              _deliveryManagerService.generateUniqueCode().then((code) {
+                setDialogState(() {
+                  uniqueCode = code;
+                  uniqueCodeController.text = code;
+                });
+              });
+            }
+
             return AlertDialog(
               title: Text('배송 관리자 추가'),
               content: Container(
@@ -417,23 +456,150 @@ class _DeliveryManagerManagementScreenState
                                 },
                               ),
                             ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: bankCodeStd,
+                                decoration: InputDecoration(labelText: '은행'),
+                                items:
+                                    banks.map((bank) {
+                                      return DropdownMenuItem<String>(
+                                        value: bank['code'],
+                                        child: Text(bank['name']!),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    bankCodeStd = value!;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '은행을 선택하세요';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
                           ],
                         ),
                         SizedBox(height: 16),
-                        DropdownButton<String>(
-                          value: preferences,
-                          items:
-                              ['카톡', '이메일'].map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                          onChanged: (String? newValue) {
-                            setDialogState(() {
-                              preferences = newValue!;
-                            });
-                          },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: uniqueCodeController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  labelText: '고유 코드',
+                                  suffixIcon: Icon(Icons.copy),
+                                ),
+                                onTap: () {
+                                  Clipboard.setData(
+                                    ClipboardData(
+                                      text: uniqueCodeController.text,
+                                    ),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('코드가 복사되었습니다')),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButton<String>(
+                                value: preferences,
+                                items:
+                                    ['카톡', '이메일'].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                onChanged: (String? newValue) {
+                                  setDialogState(() {
+                                    preferences = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: accountHolderInfoType,
+                                decoration: InputDecoration(
+                                  labelText: '예금주 구분',
+                                ),
+                                items: [
+                                  DropdownMenuItem(
+                                    value: '0',
+                                    child: Text('개인'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '6',
+                                    child: Text('법인'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    accountHolderInfoType = value!;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '예금주 구분을 선택하세요';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: '예금주 정보',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '예금주 정보를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  accountHolderInfo = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '계좌번호'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '계좌번호를 입력하세요';
+                                  }
+                                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                                    return '숫자만 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  accountNum = value!;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -471,12 +637,20 @@ class _DeliveryManagerManagementScreenState
                       );
 
                       try {
+                        String subId =
+                            await _deliveryManagerService.getNextSubId();
                         // Create product object
                         DeliveryManager newDeliveryManager = DeliveryManager(
                           userId: userId,
                           name: name,
                           email: email,
                           phone: phone,
+                          subId: subId,
+                          bankCodeStd: bankCodeStd,
+                          code: uniqueCode,
+                          accountNum: accountNum,
+                          accountHolderInfoType: accountHolderInfoType,
+                          accountHolderInfo: accountHolderInfo,
                           preferences: preferences,
                         );
 
@@ -528,7 +702,18 @@ class _DeliveryManagerManagementScreenState
     String email = deliveryManager.email;
     String phone = deliveryManager.phone;
     String preferences = deliveryManager.preferences;
+    String bankCodeStd =
+        deliveryManager.bankCodeStd.isNotEmpty
+            ? deliveryManager.bankCodeStd
+            : banks.first['code']!;
 
+    String uniqueCode = deliveryManager.code;
+
+    final uniqueCodeController = TextEditingController(text: uniqueCode);
+    String accountNum = deliveryManager.accountNum;
+    String accountHolderInfoType =
+        deliveryManager.accountHolderInfoType; // default to individual
+    String accountHolderInfo = deliveryManager.accountHolderInfo;
     // Actually show the dialog
     showDialog(
       context: context,
@@ -600,24 +785,154 @@ class _DeliveryManagerManagementScreenState
                                 },
                               ),
                             ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: bankCodeStd,
+                                decoration: InputDecoration(labelText: '은행'),
+                                items:
+                                    banks.map((bank) {
+                                      return DropdownMenuItem<String>(
+                                        value: bank['code'],
+                                        child: Text(bank['name']!),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    bankCodeStd = value!;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '은행을 선택하세요';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
                           ],
                         ),
 
                         SizedBox(height: 16),
-                        DropdownButton<String>(
-                          value: preferences,
-                          items:
-                              ['카톡', '이메일'].map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                          onChanged: (String? newValue) {
-                            setDialogState(() {
-                              preferences = newValue!;
-                            });
-                          },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: uniqueCodeController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  labelText: '고유 코드',
+                                  suffixIcon: Icon(Icons.copy),
+                                ),
+                                onTap: () {
+                                  Clipboard.setData(
+                                    ClipboardData(
+                                      text: uniqueCodeController.text,
+                                    ),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('코드가 복사되었습니다')),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+
+                            Expanded(
+                              child: DropdownButton<String>(
+                                value: preferences,
+                                items:
+                                    ['카톡', '이메일'].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                onChanged: (String? newValue) {
+                                  setDialogState(() {
+                                    preferences = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: accountHolderInfoType,
+                                decoration: InputDecoration(
+                                  labelText: '예금주 구분',
+                                ),
+                                items: [
+                                  DropdownMenuItem(
+                                    value: '0',
+                                    child: Text('개인'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '6',
+                                    child: Text('법인'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setDialogState(() {
+                                    accountHolderInfoType = value!;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '예금주 구분을 선택하세요';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: accountHolderInfo,
+                                decoration: InputDecoration(
+                                  labelText: '예금주 정보',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '예금주 정보를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  accountHolderInfo = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: accountNum,
+                                decoration: InputDecoration(labelText: '계좌번호'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '계좌번호를 입력하세요';
+                                  }
+                                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                                    return '숫자만 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  accountNum = value!;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -661,6 +976,12 @@ class _DeliveryManagerManagementScreenState
                               name: name,
                               email: email,
                               phone: phone,
+                              subId: deliveryManager.subId,
+                              bankCodeStd: bankCodeStd,
+                              code: uniqueCode,
+                              accountNum: accountNum,
+                              accountHolderInfoType: accountHolderInfoType,
+                              accountHolderInfo: accountHolderInfo,
                               preferences: preferences,
                             );
 

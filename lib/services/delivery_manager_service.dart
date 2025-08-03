@@ -20,6 +20,46 @@ class DeliveryManagerService {
     }).toList();
   }
 
+  Future<String> getNextSubId() async {
+    final snapshot = await deliveryManagersCollection.get();
+    final subIds =
+        snapshot.docs
+            .map((doc) => doc['subId'] as String?)
+            .where((id) => id != null && id.startsWith('sub'))
+            .toList();
+
+    int maxNum = 0;
+    for (final id in subIds) {
+      final numStr = id!.replaceAll(RegExp(r'[^0-9]'), '');
+      final num = int.tryParse(numStr) ?? 0;
+      if (num > maxNum) maxNum = num;
+    }
+    final nextNum = maxNum + 1;
+    return 'sub${nextNum.toString().padLeft(2, '0')}';
+  }
+
+  Future<String> generateUniqueCode() async {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random();
+    String code;
+    bool exists = true;
+
+    do {
+      code =
+          List.generate(
+            10,
+            (index) => chars[rand.nextInt(chars.length)],
+          ).join();
+      final snapshot =
+          await deliveryManagersCollection
+              .where('uniqueCode', isEqualTo: code)
+              .get();
+      exists = snapshot.docs.isNotEmpty;
+    } while (exists);
+
+    return code;
+  }
+
   Future<void> addDeliveryManager(DeliveryManager deliveryManager) async {
     try {
       deliveryManager.userId = deliveryManager.phone;
