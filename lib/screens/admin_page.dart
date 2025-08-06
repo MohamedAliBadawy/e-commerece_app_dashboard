@@ -2,6 +2,7 @@ import 'package:ecommerce_app_dashboard/helpers/responsive_scaffold.dart';
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
 import 'package:ecommerce_app_dashboard/screens/delivery_manager_management.dart';
 import 'package:ecommerce_app_dashboard/screens/order_management.dart';
+import 'package:ecommerce_app_dashboard/screens/payment_history_screen.dart';
 import 'package:ecommerce_app_dashboard/screens/placeholder_editor_screen.dart';
 import 'package:ecommerce_app_dashboard/screens/post_management.dart';
 import 'package:ecommerce_app_dashboard/screens/user_management.dart';
@@ -38,6 +39,7 @@ class _AdminPageState extends State<AdminPage> {
       icon: Icons.edit_note,
       mobileTitle: '편집',
     ),
+    NavigationItem(title: '결제 내역', icon: Icons.payment, mobileTitle: '파이머'),
   ];
 
   @override
@@ -64,6 +66,7 @@ class _AdminPageState extends State<AdminPage> {
       ProductManagementScreen(),
       CategoryManagementScreen(),
       PlaceholderEditorScreen(),
+      PaymentHistoryScreen(),
     ];
     if (isMobile) {
       // Mobile Layout with Bottom Navigation
@@ -182,6 +185,15 @@ class _AdminPageState extends State<AdminPage> {
                     onTap:
                         () => setState(() {
                           _selectedIndex = 6;
+                          _currentSubPage = null;
+                        }),
+                  ),
+                  SidebarItem(
+                    title: '결제 내역',
+                    isSelected: _selectedIndex == 7,
+                    onTap:
+                        () => setState(() {
+                          _selectedIndex = 7;
                           _currentSubPage = null;
                         }),
                   ),
