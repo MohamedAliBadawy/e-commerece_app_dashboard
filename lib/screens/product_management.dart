@@ -1262,6 +1262,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   sellerName: sellerName,
                                   category: category,
                                   price: price,
+
                                   supplyPrice: supplyPrice,
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,
@@ -1833,7 +1834,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                initialValue: deliveryPrice.toString(),
+                                initialValue: supplyPrice.toString(),
                                 decoration: InputDecoration(
                                   labelText: 'Supply Price',
                                 ),
