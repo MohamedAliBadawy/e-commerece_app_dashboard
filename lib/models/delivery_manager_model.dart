@@ -14,6 +14,8 @@ class DeliveryManager {
   String accountNum;
   String accountHolderInfoType;
   String accountHolderInfo;
+  String uid;
+
   DeliveryManager({
     required this.userId,
     required this.email,
@@ -27,6 +29,7 @@ class DeliveryManager {
     required this.accountHolderInfoType,
     required this.accountHolderInfo,
     required this.bankCodeStd,
+    required this.uid,
   });
 
   Map<String, Object?> toDocument() {
@@ -43,6 +46,7 @@ class DeliveryManager {
       'accountHolderInfoType': accountHolderInfoType,
       'accountHolderInfo': accountHolderInfo,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      'uid': uid,
     };
   }
 
@@ -60,6 +64,7 @@ class DeliveryManager {
       accountHolderInfoType: doc['accountHolderInfoType'] ?? '0',
       accountHolderInfo: doc['accountHolderInfo'] ?? '',
       createdAt: doc['createdAt'],
+      uid: doc['uid'] ?? '',
     );
   }
 

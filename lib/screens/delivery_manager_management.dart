@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:ecommerce_app_dashboard/models/delivery_manager_model.dart';
 import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,6 +31,16 @@ const List<Map<String, String>> banks = [
   {'name': '카카오뱅크', 'code': '090'},
   {'name': '토스뱅크', 'code': '092'},
 ];
+
+String _generateRandomPassword({int length = 10}) {
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final rand = Random();
+  return List.generate(
+    length,
+    (index) => chars[rand.nextInt(chars.length)],
+  ).join();
+}
 
 class DeliveryManagerManagementScreen extends StatefulWidget {
   const DeliveryManagerManagementScreen({super.key});
@@ -123,7 +136,6 @@ class _DeliveryManagerManagementScreenState
     _searchController.dispose();
     _headerScrollController.dispose();
     _bodyScrollController.dispose();
-    super.dispose();
     super.dispose();
   }
 
@@ -378,7 +390,9 @@ class _DeliveryManagerManagementScreenState
     String accountHolderInfoType = '0'; // default to individual
     String accountHolderInfo = '';
     final uniqueCodeController = TextEditingController();
-
+    String password = '';
+    final TextEditingController passwordController = TextEditingController();
+    bool autoGeneratePassword = false;
     // Actually show the dialog
     showDialog(
       context: context,
@@ -445,6 +459,9 @@ class _DeliveryManagerManagementScreenState
                               child: TextFormField(
                                 decoration: InputDecoration(labelText: '전화번호'),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return '전화번호를 입력하세요';
@@ -601,6 +618,46 @@ class _DeliveryManagerManagementScreenState
                             ),
                           ],
                         ),
+                        SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: autoGeneratePassword,
+                              onChanged: (value) {
+                                setDialogState(() {
+                                  autoGeneratePassword = value!;
+                                  if (autoGeneratePassword) {
+                                    password = _generateRandomPassword();
+                                    passwordController.text = password;
+                                  } else {
+                                    passwordController.clear();
+                                    password = '';
+                                  }
+                                });
+                              },
+                            ),
+                            Text('자동 비밀번호 생성'),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                controller: passwordController,
+                                decoration: InputDecoration(labelText: '비밀번호'),
+                                readOnly: autoGeneratePassword,
+                                validator: (value) {
+                                  if (!autoGeneratePassword &&
+                                      (value == null || value.isEmpty)) {
+                                    return '비밀번호를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  password = value;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -637,6 +694,13 @@ class _DeliveryManagerManagementScreenState
                       );
 
                       try {
+                        UserCredential userCredential = await FirebaseAuth
+                            .instance
+                            .createUserWithEmailAndPassword(
+                              email: email,
+                              password: password,
+                            );
+
                         String subId =
                             await _deliveryManagerService.getNextSubId();
                         // Create product object
@@ -652,6 +716,7 @@ class _DeliveryManagerManagementScreenState
                           accountHolderInfoType: accountHolderInfoType,
                           accountHolderInfo: accountHolderInfo,
                           preferences: preferences,
+                          uid: userCredential.user!.uid,
                         );
 
                         // Save to Firestore
@@ -701,6 +766,8 @@ class _DeliveryManagerManagementScreenState
     String name = deliveryManager.name;
     String email = deliveryManager.email;
     String phone = deliveryManager.phone;
+
+    String uid = deliveryManager.uid;
     String preferences = deliveryManager.preferences;
     String bankCodeStd =
         deliveryManager.bankCodeStd.isNotEmpty
@@ -774,6 +841,9 @@ class _DeliveryManagerManagementScreenState
                                 initialValue: phone,
                                 decoration: InputDecoration(labelText: '전화번호'),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return '전화번호를 입력하세요';
@@ -983,6 +1053,7 @@ class _DeliveryManagerManagementScreenState
                               accountHolderInfoType: accountHolderInfoType,
                               accountHolderInfo: accountHolderInfo,
                               preferences: preferences,
+                              uid: uid,
                             );
 
                         // Update in Firestore
@@ -1072,6 +1143,20 @@ class _DeliveryManagerManagementScreenState
                     await _deliveryManagerService.deleteDeliveryManager(
                       deliveryManager.userId,
                     );
+                    try {
+                      await DeliveryManagerService().deleteAuthUserHttp(
+                        deliveryManager.uid,
+                      );
+                      // Optionally show success message
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('사용자 삭제 성공')));
+                    } catch (e) {
+                      print('Error deleting user from Firebase Auth: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: ${e.toString()}')),
+                      );
+                    }
                   }
 
                   // Clear selections

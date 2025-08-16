@@ -79,6 +79,19 @@ class DeliveryManagerService {
         .update(deliveryManager.toDocument());
   }
 
+  Future<void> deleteAuthUserHttp(String uid) async {
+    // Replace with your actual Cloud Function URL
+    final url = 'https://deleteauthuser-nlc5xkd7oa-uc.a.run.app';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'uid': uid}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete user: ${response.body}');
+    }
+  }
+
   Future<void> deleteDeliveryManager(String userId) {
     return deliveryManagersCollection.doc(userId).delete();
   }
