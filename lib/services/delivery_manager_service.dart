@@ -62,7 +62,7 @@ class DeliveryManagerService {
 
   Future<void> addDeliveryManager(DeliveryManager deliveryManager) async {
     try {
-      deliveryManager.userId = deliveryManager.phone;
+      deliveryManager.userId = deliveryManager.uid;
       // Save to Firestore regardless of email success
       return await deliveryManagersCollection
           .doc(deliveryManager.userId)
