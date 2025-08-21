@@ -558,6 +558,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   // Delete each selected product
                   for (User user in _selectedUsers) {
                     await _userService.deleteUser(user.userId);
+                    await _userService.deleteAuthUserHttp(user.userId);
                   }
                   // Clear selections
                   _clearSelections();

@@ -1183,11 +1183,62 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       ),
                                       child:
                                           _additionalImagePreviews.isNotEmpty
-                                              ? ListView(
+                                              ? ReorderableListView(
                                                 scrollDirection:
                                                     Axis.horizontal,
+                                                onReorder: (
+                                                  oldIndex,
+                                                  newIndex,
+                                                ) {
+                                                  setDialogState(() {
+                                                    if (newIndex > oldIndex) {
+                                                      newIndex -= 1;
+                                                    }
+                                                    final item =
+                                                        _additionalImagePreviews
+                                                            .removeAt(oldIndex);
+
+                                                    _additionalImagePreviews
+                                                        .insert(newIndex, item);
+                                                  });
+                                                },
                                                 children:
-                                                    _additionalImagePreviews,
+                                                    _additionalImagePreviews.asMap().entries.map((
+                                                      entry,
+                                                    ) {
+                                                      int index = entry.key;
+                                                      Widget imageWidget =
+                                                          entry.value;
+
+                                                      return Stack(
+                                                        key: ValueKey(
+                                                          index,
+                                                        ), // Required for ReorderableListView
+                                                        children: [
+                                                          imageWidget,
+                                                          // Delete button
+                                                          Positioned(
+                                                            top: 0,
+                                                            right: 0,
+                                                            child: IconButton(
+                                                              icon: Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                              onPressed: () {
+                                                                setDialogState(() {
+                                                                  _additionalImagePreviews
+                                                                      .removeAt(
+                                                                        index,
+                                                                      );
+                                                                });
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
                                               )
                                               : Center(
                                                 child: Icon(
@@ -1521,7 +1572,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   _additionalImages.clear();
                   _additionalImagePreviews.clear();
                   _additionalImages.addAll(images);
-
+                  imgUrls.clear;
                   // Show loading state immediately
                   _additionalImagePreviews.add(
                     Center(child: CircularProgressIndicator()),
@@ -2118,6 +2169,17 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                             .removeAt(oldIndex);
                                                     _additionalImagePreviews
                                                         .insert(newIndex, item);
+                                                    if (imgUrls.length ==
+                                                        _additionalImagePreviews
+                                                            .length) {
+                                                      final imgItem = imgUrls
+                                                          .removeAt(oldIndex);
+
+                                                      imgUrls.insert(
+                                                        newIndex,
+                                                        imgItem,
+                                                      );
+                                                    }
                                                   });
                                                 },
                                                 children:
@@ -2150,6 +2212,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                                                       .removeAt(
                                                                         index,
                                                                       );
+                                                                  if (imgUrls
+                                                                          .length ==
+                                                                      _additionalImagePreviews
+                                                                          .length) {
+                                                                    imgUrls
+                                                                        .removeAt(
+                                                                          index,
+                                                                        );
+                                                                  }
                                                                 });
                                                               },
                                                             ),
@@ -2225,9 +2296,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                         _additionalImages,
                                       );
 
-                                  // Combine existing and new image URLs
-                                  // This approach keeps existing images and adds new ones
-                                  imgUrls.addAll(newImgUrls);
+                                  imgUrls = newImgUrls;
                                 }
 
                                 // Create updated product object
