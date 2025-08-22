@@ -2,6 +2,8 @@
 
 import 'dart:core';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PricePoint {
   int quantity;
   double price;
@@ -41,7 +43,7 @@ class Product {
   final String? deliveryManagerId;
   final Map<String, dynamic>? address;
   final String? arrivalDate;
-
+  final Timestamp? createdAt;
   Product({
     required this.product_id,
     required this.productName,
@@ -67,6 +69,7 @@ class Product {
     required this.deliveryManagerId,
     required this.address,
     this.arrivalDate,
+    this.createdAt,
   });
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -103,6 +106,7 @@ class Product {
       /*       estimatedSettlement: map['estimatedSettlement'] ?? 0,
       estimatedSettlementDate: map['estimatedSettlementDate'] ?? '', */
       arrivalDate: map['arrivalDate'],
+      createdAt: map['createdAt'],
     );
   }
 
@@ -131,6 +135,7 @@ class Product {
       'deliveryManagerId': deliveryManagerId,
       'address': address,
       'arrivalDate': arrivalDate,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 }

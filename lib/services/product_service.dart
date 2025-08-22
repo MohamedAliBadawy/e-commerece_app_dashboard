@@ -70,6 +70,24 @@ class ProductService {
     }
   }
 
+  Future<void> addCreatedAtToOldProducts() async {
+    final productsRef = FirebaseFirestore.instance.collection('products');
+
+    final snapshot = await productsRef.get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      if (!data.containsKey('createdAt')) {
+        await productsRef.doc(doc.id).update({
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        print('Updated product: ${doc.id}');
+      }
+    }
+
+    print('✅ Finished updating old products.');
+  }
+
   Future<List<String>> uploadProductImages(List<XFile> files) async {
     List<String> urls = [];
     for (var file in files) {
