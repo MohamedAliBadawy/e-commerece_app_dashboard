@@ -817,6 +817,7 @@ class _DeliveryManagerManagementScreenState
                             SizedBox(width: 16),
                             Expanded(
                               child: TextFormField(
+                                enabled: false,
                                 initialValue: email,
                                 decoration: InputDecoration(labelText: '이메일'),
                                 validator: (value) {
