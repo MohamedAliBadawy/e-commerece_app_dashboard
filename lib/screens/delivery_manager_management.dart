@@ -722,6 +722,7 @@ class _DeliveryManagerManagementScreenState
                         // Save to Firestore
                         await _deliveryManagerService.addDeliveryManager(
                           newDeliveryManager,
+                          password,
                         );
 
                         // Close loading dialog

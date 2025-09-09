@@ -60,9 +60,82 @@ class DeliveryManagerService {
     return code;
   }
 
-  Future<void> addDeliveryManager(DeliveryManager deliveryManager) async {
+  /*  Future<void> sendAlimTalk({
+    required String accessToken,
+    required String senderKey,
+    required String cid,
+    required String templateCode,
+    required String phoneNumber,
+    required String senderNo,
+    required String message,
+  }) async {
+    final url = 'https://bizmsg-web.kakaoenterprise.com/v2/send/kakao';
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "message_type": "AT",
+        "sender_key": senderKey,
+        "cid": cid,
+        "template_code": templateCode,
+        "phone_number": phoneNumber,
+        "sender_no": senderNo,
+        "message": message,
+        "fall_back_yn": false,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("AlimTalk sent successfully");
+    } else {
+      print(
+        "Failed to send AlimTalk: ${response.statusCode} - ${response.body}",
+      );
+    }
+  }
+ */
+  Future<void> addDeliveryManager(
+    DeliveryManager deliveryManager,
+    String password,
+  ) async {
     try {
       deliveryManager.userId = deliveryManager.uid;
+
+      final requestData = {
+        'email': deliveryManager.email,
+        'password': password,
+        'name': deliveryManager.name,
+      };
+
+      // Debug output
+      print("Sending data: ${jsonEncode(requestData)}");
+      print("To URL: https://sendcredentialemail-nlc5xkd7oa-uc.a.run.app");
+
+      try {
+        // Try with the dio package instead of http
+        final dio = Dio();
+        final response = await dio.post(
+          'https://sendcredentialemail-nlc5xkd7oa-uc.a.run.app',
+          options: Options(headers: {'Content-Type': 'application/json'}),
+          data: requestData,
+        );
+
+        print('Response status: ${response.statusCode}');
+        print('Response data: ${response.data}');
+      } catch (e) {
+        print('Error details: $e');
+        if (e is DioException) {
+          print('Request that failed: ${e.requestOptions.uri}');
+          print('Request data: ${e.requestOptions.data}');
+          print('Response status: ${e.response?.statusCode}');
+          print('Response data: ${e.response?.data}');
+        }
+      }
+
       // Save to Firestore regardless of email success
       return await deliveryManagersCollection
           .doc(deliveryManager.userId)
