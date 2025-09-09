@@ -1273,7 +1273,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           : () async {
                             if (_formKey.currentState!.validate()) {
                               _formKey.currentState!.save();
-                              if (imgUrl == null || imgUrls.isEmpty) {
+                              if (_mainImage == null ||
+                                  _additionalImages.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('최소 하나의 이미지를 업로드해야 합니다'),
