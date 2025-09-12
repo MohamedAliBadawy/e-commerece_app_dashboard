@@ -723,7 +723,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     final bool isSelected = _selectedOrders.any(
       (p) => p.orderId == order.orderId,
     );
-
+    bool isProductDeleted = false;
+    Product product = Product.empty();
     return FutureBuilder(
       future: Future.wait([
         FirebaseFirestore.instance.collection('deliveryManagers').get(),
@@ -751,15 +752,18 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
             selectedManagerNames[order.orderId] == null) {
           selectedManagerNames[order.orderId] = order.deliveryManagerId!;
         }
-        final product = Product.fromMap(
-          (snapshot.data![1] as DocumentSnapshot).data()
-              as Map<String, dynamic>,
-        );
+        if ((snapshot.data![1] as DocumentSnapshot).data() == null) {
+          isProductDeleted = true;
+        } else {
+          product = Product.fromMap(
+            (snapshot.data![1] as DocumentSnapshot).data()
+                as Map<String, dynamic>,
+          );
+        }
 
         return Container(
           decoration: BoxDecoration(
             color: isSelected ? Colors.blue.withOpacity(0.1) : null,
-
             border: Border(
               bottom: BorderSide(color: Colors.black),
               top: BorderSide(color: Colors.black),
@@ -773,14 +777,19 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 flex: 2,
                 child: Container(
                   height: 50,
-
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   decoration: BoxDecoration(
                     border: Border(right: BorderSide(color: Colors.black)),
                   ),
                   child: Row(
                     children: [
-                      product.imgUrl != null
+                      isProductDeleted
+                          ? Container(
+                            width: 50,
+                            height: 50,
+                            color: Colors.grey.shade300,
+                          )
+                          : product.imgUrl != null
                           ? Image.network(
                             product.imgUrl!,
                             width: 50,
@@ -793,7 +802,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             color: Colors.grey.shade300,
                           ),
                       SizedBox(width: 16),
-                      Flexible(child: Text(product.productName)),
+                      Flexible(
+                        child: Text(
+                          isProductDeleted ? '삭제된 상품' : product.productName,
+                        ),
+                      ),
                     ],
                   ),
                 ),

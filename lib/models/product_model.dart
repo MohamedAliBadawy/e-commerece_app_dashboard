@@ -72,6 +72,35 @@ class Product {
     this.createdAt,
   });
 
+  factory Product.empty() {
+    return Product(
+      product_id: '',
+      productName: '',
+      sellerName: '',
+      instructions: '',
+      description: '',
+      stock: 0,
+      supplyPrice: 0,
+      price: 0,
+      baselineTime: 0,
+      meridiem: 'AM',
+      imgUrl: '',
+      imgUrls: [],
+      category: '',
+      pricePoints: [PricePoint(quantity: 1, price: 0)],
+      freeShipping: false,
+      deliveryManagerId: '',
+      deliveryPrice: 0,
+      marginRate: 0,
+      shippingFee: 0,
+      address: {},
+      /*       estimatedSettlement: map['estimatedSettlement'] ?? 0,
+      estimatedSettlementDate: map['estimatedSettlementDate'] ?? '', */
+      arrivalDate: '',
+      createdAt: Timestamp.now(),
+    );
+  }
+
   factory Product.fromMap(Map<String, dynamic> map) {
     return Product(
       product_id: map['product_id'],
