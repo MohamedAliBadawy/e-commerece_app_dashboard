@@ -26,6 +26,7 @@ class Product {
   final String instructions;
   final String description;
   final String category;
+  final List<String> categoryList;
   final int stock;
   final double price;
   final int supplyPrice;
@@ -49,6 +50,7 @@ class Product {
     required this.productName,
     required this.sellerName,
     required this.category,
+    required this.categoryList,
     required this.freeShipping,
     required this.instructions,
     required this.stock,
@@ -87,6 +89,7 @@ class Product {
       imgUrl: '',
       imgUrls: [],
       category: '',
+      categoryList: [],
       pricePoints: [PricePoint(quantity: 1, price: 0)],
       freeShipping: false,
       deliveryManagerId: '',
@@ -121,6 +124,7 @@ class Product {
       imgUrls: List<String?>.from(map['imgUrls'] ?? []),
       sellerName: map['sellerName'] ?? '',
       category: map['category'] ?? '',
+      categoryList: List<String>.from(map['categoryList'] ?? []),
       pricePoints:
           (map['pricePoints'] as List?)
               ?.map((pp) => PricePoint.fromMap(pp))
@@ -159,6 +163,7 @@ class Product {
       'imgUrls': imgUrls,
       'sellerName': sellerName,
       'category': category,
+      'categoryList': categoryList,
       'freeShipping': freeShipping,
       'pricePoints': pricePoints.map((pp) => pp.toMap()).toList(),
       'deliveryManagerId': deliveryManagerId,

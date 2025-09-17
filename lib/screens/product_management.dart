@@ -417,6 +417,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productName = '';
     String sellerName = '';
     String category = '';
+    List<String> categoryList = [];
     // For categories
     List<Category> categories = [];
     bool isLoadingCategories = true;
@@ -672,23 +673,28 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       ? Center(
                                         child: CircularProgressIndicator(),
                                       )
-                                      : DropdownButton<String>(
-                                        value:
-                                            categories.isNotEmpty
-                                                ? category
-                                                : null,
-                                        items:
-                                            categories.map((Category value) {
-                                              return DropdownMenuItem<String>(
-                                                value: value.id,
-                                                child: Text(value.name),
+                                      : Wrap(
+                                        spacing: 8,
+                                        children:
+                                            categories.map((cat) {
+                                              final isSelected = categoryList
+                                                  .contains(cat.id);
+                                              return FilterChip(
+                                                label: Text(cat.name),
+                                                selected: isSelected,
+                                                onSelected: (bool selected) {
+                                                  setDialogState(() {
+                                                    if (selected) {
+                                                      categoryList.add(cat.id);
+                                                    } else {
+                                                      categoryList.remove(
+                                                        cat.id,
+                                                      );
+                                                    }
+                                                  });
+                                                },
                                               );
                                             }).toList(),
-                                        onChanged: (String? newValue) {
-                                          setDialogState(() {
-                                            category = newValue!;
-                                          });
-                                        },
                                       ),
                             ),
                             SizedBox(width: 16),
@@ -1320,8 +1326,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   productName: productName,
                                   sellerName: sellerName,
                                   category: category,
+                                  categoryList: categoryList,
                                   price: price,
-
                                   supplyPrice: supplyPrice,
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,
@@ -1342,6 +1348,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
                                   arrivalDate: arrivalDate,
+                                  createdAt: Timestamp.now(),
                                 );
 
                                 // Save to Firestore
@@ -1388,6 +1395,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productName = product.productName;
     String sellerName = product.sellerName;
     String category = product.category;
+    List<String> categoryList = product.categoryList;
     // For categories
     List<Category> categories = [];
     bool isLoadingCategories = true;
@@ -1666,22 +1674,28 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                       ? Center(
                                         child: CircularProgressIndicator(),
                                       )
-                                      : DropdownButton<String>(
-                                        value: category,
-
-                                        items:
-                                            categories.map((Category value) {
-                                              return DropdownMenuItem<String>(
-                                                value: value.id,
-                                                child: Text(value.name),
+                                      : Wrap(
+                                        spacing: 8,
+                                        children:
+                                            categories.map((cat) {
+                                              final isSelected = categoryList
+                                                  .contains(cat.id);
+                                              return FilterChip(
+                                                label: Text(cat.name),
+                                                selected: isSelected,
+                                                onSelected: (bool selected) {
+                                                  setDialogState(() {
+                                                    if (selected) {
+                                                      categoryList.add(cat.id);
+                                                    } else {
+                                                      categoryList.remove(
+                                                        cat.id,
+                                                      );
+                                                    }
+                                                  });
+                                                },
                                               );
                                             }).toList(),
-
-                                        onChanged: (String? newValue) {
-                                          setDialogState(() {
-                                            category = newValue!;
-                                          });
-                                        },
                                       ),
                             ),
                             SizedBox(width: 16),
@@ -2314,6 +2328,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   sellerName: sellerName,
                                   supplyPrice: supplyPrice,
                                   category: category,
+                                  categoryList: categoryList,
                                   price: price,
                                   pricePoints: pricePoints,
                                   freeShipping: freeShipping,

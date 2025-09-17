@@ -74,7 +74,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     sheet.appendRow([
       TextCellValue('주문 ID'),
       TextCellValue('수취인'),
-      TextCellValue('Phone'),
+      TextCellValue('전화번호'),
       TextCellValue('주소'),
       TextCellValue('상세주소'),
       TextCellValue('배송 요청사항'),
@@ -82,9 +82,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       TextCellValue('수량'),
       TextCellValue('날짜'),
       TextCellValue('가격'),
-      TextCellValue('Supply price'),
-      TextCellValue('Delivery price'),
-      TextCellValue('Shipping fee'),
+      TextCellValue('공급가'),
+      TextCellValue('배송비'),
+      TextCellValue('도서산간 추가 배송비'),
       TextCellValue('택배사'),
       TextCellValue('운송장 번호'),
     ]);
