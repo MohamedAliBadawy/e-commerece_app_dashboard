@@ -5,6 +5,7 @@ class MyOrder {
   String cashReceipt;
   String courier;
   String deliveryAddress;
+  String deliveryAddressDetail;
   String deliveryInstructions;
   String orderStatus;
   String paymentMethod;
@@ -24,6 +25,7 @@ class MyOrder {
     required this.cashReceipt,
     required this.courier,
     required this.deliveryAddress,
+    required this.deliveryAddressDetail,
     required this.deliveryInstructions,
     required this.orderStatus,
     required this.paymentMethod,
@@ -45,6 +47,7 @@ class MyOrder {
       'cashReceipt': cashReceipt,
       'courier': courier,
       'deliveryAddress': deliveryAddress,
+      'deliveryAddressDetail': deliveryAddressDetail,
       'deliveryInstructions': deliveryInstructions,
       'orderStatus': orderStatus,
       'paymentMethod': paymentMethod,
@@ -67,6 +70,7 @@ class MyOrder {
       cashReceipt: doc['cashReceipt'] ?? '',
       courier: doc['courier'] ?? '',
       deliveryAddress: doc['deliveryAddress'] ?? '',
+      deliveryAddressDetail: doc['deliveryAddressDetail'] ?? '',
       deliveryInstructions: doc['deliveryInstructions'] ?? '',
       orderStatus: doc['orderStatus'] ?? '',
       paymentMethod: doc['paymentMethod'] ?? '',

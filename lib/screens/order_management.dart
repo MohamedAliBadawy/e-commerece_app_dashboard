@@ -76,9 +76,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       TextCellValue('수취인'),
       TextCellValue('Phone'),
       TextCellValue('주소'),
+      TextCellValue('상세주소'),
       TextCellValue('배송 요청사항'),
       TextCellValue('제품'),
       TextCellValue('수량'),
+      TextCellValue('날짜'),
+      TextCellValue('가격'),
       TextCellValue('Supply price'),
       TextCellValue('Delivery price'),
       TextCellValue('Shipping fee'),
@@ -115,10 +118,16 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         TextCellValue(user?.name ?? ''),
         TextCellValue(order.phoneNo),
         TextCellValue(order.deliveryAddress),
+        TextCellValue(order.deliveryAddressDetail),
         TextCellValue(order.deliveryInstructions),
         TextCellValue(product?.productName ?? ''),
         TextCellValue(order.quantity.toString()),
-        TextCellValue(product?.supplyPrice?.toString() ?? ''),
+        TextCellValue(
+          DateTime.parse(order.orderDate).toLocal().toString().split('.')[0],
+        ),
+        TextCellValue(order.totalPrice.toString()),
+
+        TextCellValue(product?.supplyPrice.toString() ?? ''),
         TextCellValue(product?.deliveryPrice?.toString() ?? ''),
         TextCellValue(product?.shippingFee?.toString() ?? ''),
         TextCellValue(order.courier),
@@ -450,8 +459,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     _buildHeaderCell('사용자', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('사용자 ID', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('주소', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('상세주소', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('수량', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('가격', flex: 1, hasRightBorder: true),
-                    _buildHeaderCell('사유', flex: 1, hasRightBorder: true),
+                    _buildHeaderCell('날짜', flex: 1, hasRightBorder: true),
                     _buildHeaderCell(
                       '',
                       flex: 1,
@@ -906,7 +917,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     border: Border(right: BorderSide(color: Colors.black)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(product.baselineTime.toString()),
+                  child: Text(order.deliveryAddress),
                 ),
               ),
               Expanded(
@@ -918,7 +929,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     border: Border(right: BorderSide(color: Colors.black)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(product.stock.toString()),
+                  child: Text(order.deliveryAddressDetail),
                 ),
               ),
               Expanded(
@@ -930,7 +941,35 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     border: Border(right: BorderSide(color: Colors.black)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(order.trackingNumber),
+                  child: Text(order.quantity.toString()),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(order.totalPrice.toString()),
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    DateTime.parse(
+                      order.orderDate,
+                    ).toLocal().toString().split('.')[0],
+                  ),
                 ),
               ),
               Expanded(
