@@ -45,6 +45,7 @@ class Product {
   final Map<String, dynamic>? address;
   final String? arrivalDate;
   final Timestamp? createdAt;
+  final String memo;
   Product({
     required this.product_id,
     required this.productName,
@@ -72,6 +73,7 @@ class Product {
     required this.address,
     this.arrivalDate,
     this.createdAt,
+    required this.memo,
   });
 
   factory Product.empty() {
@@ -101,6 +103,7 @@ class Product {
       estimatedSettlementDate: map['estimatedSettlementDate'] ?? '', */
       arrivalDate: '',
       createdAt: Timestamp.now(),
+      memo: '',
     );
   }
 
@@ -140,6 +143,7 @@ class Product {
       estimatedSettlementDate: map['estimatedSettlementDate'] ?? '', */
       arrivalDate: map['arrivalDate'],
       createdAt: map['createdAt'],
+      memo: map['memo'],
     );
   }
 
@@ -170,6 +174,7 @@ class Product {
       'address': address,
       'arrivalDate': arrivalDate,
       'createdAt': FieldValue.serverTimestamp(),
+      'memo': memo,
     };
   }
 }

@@ -417,6 +417,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productName = '';
     String sellerName = '';
     String category = '';
+    String memo = '';
     List<String> categoryList = [];
     // For categories
     List<Category> categories = [];
@@ -1141,6 +1142,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           },
                         ),
                         SizedBox(height: 24),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: 'Memo'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'memo can not be empty';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            memo = value!;
+                          },
+                        ),
+                        SizedBox(height: 24),
 
                         Row(
                           children: [
@@ -1349,6 +1363,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   shippingFee: shippingFee,
                                   arrivalDate: arrivalDate,
                                   createdAt: Timestamp.now(),
+                                  memo: memo,
                                 );
 
                                 // Save to Firestore
@@ -1395,6 +1410,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     String productName = product.productName;
     String sellerName = product.sellerName;
     String category = product.category;
+    String memo = product.memo;
     List<String> categoryList = product.categoryList;
     // For categories
     List<Category> categories = [];
@@ -2128,6 +2144,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           },
                         ),
                         SizedBox(height: 24),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: 'Memo'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'memo can not be empty';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            memo = value!;
+                          },
+                        ),
+                        SizedBox(height: 24),
                         Row(
                           children: [
                             Expanded(
@@ -2352,6 +2381,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                                   deliveryPrice: deliveryPrice,
                                   shippingFee: shippingFee,
                                   arrivalDate: arrivalDate,
+                                  memo: memo,
                                 );
 
                                 // Update in Firestore
