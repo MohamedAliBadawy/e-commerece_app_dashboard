@@ -143,7 +143,7 @@ class Product {
       estimatedSettlementDate: map['estimatedSettlementDate'] ?? '', */
       arrivalDate: map['arrivalDate'],
       createdAt: map['createdAt'],
-      memo: map['memo'],
+      memo: map['memo'] ?? '',
     );
   }
 

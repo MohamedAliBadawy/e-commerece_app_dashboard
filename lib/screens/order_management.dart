@@ -72,6 +72,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
     // Header row
     sheet.appendRow([
+      TextCellValue('날짜'),
       TextCellValue('주문 ID'),
       TextCellValue('수취인'),
       TextCellValue('전화번호'),
@@ -80,7 +81,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       TextCellValue('배송 요청사항'),
       TextCellValue('제품'),
       TextCellValue('수량'),
-      TextCellValue('날짜'),
       TextCellValue('가격'),
       TextCellValue('공급가'),
       TextCellValue('배송비'),
@@ -114,6 +114,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               : null;
 
       sheet.appendRow([
+        TextCellValue(
+          DateTime.parse(order.orderDate).toLocal().toString().split('.')[0],
+        ),
         TextCellValue(order.orderId),
         TextCellValue(user?.name ?? ''),
         TextCellValue(order.phoneNo),
@@ -122,9 +125,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         TextCellValue(order.deliveryInstructions),
         TextCellValue(product?.productName ?? ''),
         TextCellValue(order.quantity.toString()),
-        TextCellValue(
-          DateTime.parse(order.orderDate).toLocal().toString().split('.')[0],
-        ),
+
         TextCellValue(order.totalPrice.toString()),
 
         TextCellValue(product?.supplyPrice.toString() ?? ''),
@@ -454,6 +455,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ),
                 child: Row(
                   children: [
+                    _buildHeaderCell('날짜', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('상품', flex: 2, hasRightBorder: true),
                     _buildHeaderCell('주문 번호', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('사용자', flex: 1, hasRightBorder: true),
@@ -462,7 +464,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     _buildHeaderCell('상세주소', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('수량', flex: 1, hasRightBorder: true),
                     _buildHeaderCell('가격', flex: 1, hasRightBorder: true),
-                    _buildHeaderCell('날짜', flex: 1, hasRightBorder: true),
                     _buildHeaderCell(
                       '',
                       flex: 1,
@@ -736,6 +737,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     );
     bool isProductDeleted = false;
     Product product = Product.empty();
+    print(order.deliveryManagerId);
     return FutureBuilder(
       future: Future.wait([
         FirebaseFirestore.instance.collection('deliveryManagers').get(),
@@ -784,6 +786,22 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           ),
           child: Row(
             children: [
+              Expanded(
+                flex: 1,
+                child: Container(
+                  height: 50,
+
+                  decoration: BoxDecoration(
+                    border: Border(right: BorderSide(color: Colors.black)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    DateTime.parse(
+                      order.orderDate,
+                    ).toLocal().toString().split('.')[0],
+                  ),
+                ),
+              ),
               Expanded(
                 flex: 2,
                 child: Container(
@@ -956,22 +974,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   child: Text(order.totalPrice.toString()),
                 ),
               ),
-              Expanded(
-                flex: 1,
-                child: Container(
-                  height: 50,
 
-                  decoration: BoxDecoration(
-                    border: Border(right: BorderSide(color: Colors.black)),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    DateTime.parse(
-                      order.orderDate,
-                    ).toLocal().toString().split('.')[0],
-                  ),
-                ),
-              ),
               Expanded(
                 child: IconButton(
                   onPressed: () async {
