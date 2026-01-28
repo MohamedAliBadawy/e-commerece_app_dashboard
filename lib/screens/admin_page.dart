@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/helpers/responsive_scaffold.dart';
+import 'package:ecommerce_app_dashboard/models/chat_room_model.dart';
 import 'package:ecommerce_app_dashboard/screens/category_management.dart';
 import 'package:ecommerce_app_dashboard/screens/delivery_manager_management.dart';
+import 'package:ecommerce_app_dashboard/screens/direct_chats_screen.dart';
 import 'package:ecommerce_app_dashboard/screens/order_management.dart';
 import 'package:ecommerce_app_dashboard/screens/payment_history_screen.dart';
 import 'package:ecommerce_app_dashboard/screens/placeholder_editor_screen.dart';
@@ -12,6 +15,56 @@ import 'product_management.dart';
 class AdminPage extends StatefulWidget {
   @override
   _AdminPageState createState() => _AdminPageState();
+}
+
+Widget buildMessagesIcon() {
+  return StreamBuilder(
+    stream: FirebaseFirestore.instance
+        .collection('chatRooms')
+        .where('participants', arrayContains: "Admin")
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => ChatRoomModel.fromMap(doc.data()))
+                  .toList(),
+        ),
+    builder: (context, snapshot) {
+      final currentUserId = "Admin";
+      bool hasUnread = false;
+      if (snapshot.hasData) {
+        final chatRooms = snapshot.data!;
+        hasUnread = chatRooms.any(
+          (room) => (room.unreadCount[currentUserId] ?? 0) > 0,
+        );
+      }
+      return InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DirectChatsScreen()),
+          );
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            ImageIcon(AssetImage('assets/005 3.png'), size: 24),
+            if (hasUnread)
+              Positioned(
+                left: -10,
+                top: -5,
+                child: Image.asset(
+                  'assets/notification.png',
+                  width: 18,
+                  height: 18,
+                ),
+              ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 class _AdminPageState extends State<AdminPage> {
@@ -73,10 +126,16 @@ class _AdminPageState extends State<AdminPage> {
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(
-            _currentSubPage != null
-                ? '뒤로'
-                : _navigationItems[_selectedIndex].title,
+          title: Row(
+            children: [
+              buildMessagesIcon(),
+              SizedBox(width: 10),
+              Text(
+                _currentSubPage != null
+                    ? '뒤로'
+                    : _navigationItems[_selectedIndex].title,
+              ),
+            ],
           ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
@@ -104,7 +163,13 @@ class _AdminPageState extends State<AdminPage> {
     } else {
       return ResponsiveScaffold(
         appBar: AppBar(
-          title: Text('관리자 페이지'),
+          title: Row(
+            children: [
+              buildMessagesIcon(),
+              SizedBox(width: 10),
+              Text('관리자 페이지'),
+            ],
+          ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
