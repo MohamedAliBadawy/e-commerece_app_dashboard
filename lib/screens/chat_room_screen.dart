@@ -1,6 +1,5 @@
 // screens/chat_screen.dart
 import 'dart:io';
-import 'dart:math';
 
 import 'package:ecommerce_app_dashboard/core/cache/user_cache.dart';
 import 'package:ecommerce_app_dashboard/core/helpers/loading_dialog.dart';

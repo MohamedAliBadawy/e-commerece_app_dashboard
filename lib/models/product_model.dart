@@ -46,6 +46,21 @@ class Product {
   final String? arrivalDate;
   final Timestamp? createdAt;
   final String memo;
+
+  final String invoicerCorpNum;
+  final String invoicerMgtKey;
+  final String invoicerTaxRegID;
+  final String invoicerCorpName;
+  final String invoicerCEOName;
+  final String invoicerAddr;
+  final String invoicerBizClass;
+  final String invoicerBizType;
+  final String invoicerContactName;
+  final String invoicerTEL;
+  final String invoicerHP;
+  final String invoicerEmail;
+  final bool invoicerSMSSendYN;
+
   Product({
     required this.product_id,
     required this.productName,
@@ -74,6 +89,19 @@ class Product {
     this.arrivalDate,
     this.createdAt,
     required this.memo,
+    this.invoicerCorpNum = '',
+    this.invoicerMgtKey = '',
+    this.invoicerTaxRegID = '',
+    this.invoicerCorpName = '',
+    this.invoicerCEOName = '',
+    this.invoicerAddr = '',
+    this.invoicerBizClass = '',
+    this.invoicerBizType = '',
+    this.invoicerContactName = '',
+    this.invoicerTEL = '',
+    this.invoicerHP = '',
+    this.invoicerEmail = '',
+    this.invoicerSMSSendYN = false,
   });
 
   factory Product.empty() {
@@ -104,6 +132,19 @@ class Product {
       arrivalDate: '',
       createdAt: Timestamp.now(),
       memo: '',
+      invoicerCorpNum: '',
+      invoicerMgtKey: '',
+      invoicerTaxRegID: '',
+      invoicerCorpName: '',
+      invoicerCEOName: '',
+      invoicerAddr: '',
+      invoicerBizClass: '',
+      invoicerBizType: '',
+      invoicerContactName: '',
+      invoicerTEL: '',
+      invoicerHP: '',
+      invoicerEmail: '',
+      invoicerSMSSendYN: false,
     );
   }
 
@@ -144,6 +185,19 @@ class Product {
       arrivalDate: map['arrivalDate'],
       createdAt: map['createdAt'],
       memo: map['memo'] ?? '',
+      invoicerCorpNum: map['invoicerCorpNum'] ?? '',
+      invoicerMgtKey: map['invoicerMgtKey'] ?? '',
+      invoicerTaxRegID: map['invoicerTaxRegID'] ?? '',
+      invoicerCorpName: map['invoicerCorpName'] ?? '',
+      invoicerCEOName: map['invoicerCEOName'] ?? '',
+      invoicerAddr: map['invoicerAddr'] ?? '',
+      invoicerBizClass: map['invoicerBizClass'] ?? '',
+      invoicerBizType: map['invoicerBizType'] ?? '',
+      invoicerContactName: map['invoicerContactName'] ?? '',
+      invoicerTEL: map['invoicerTEL'] ?? '',
+      invoicerHP: map['invoicerHP'] ?? '',
+      invoicerEmail: map['invoicerEmail'] ?? '',
+      invoicerSMSSendYN: map['invoicerSMSSendYN'] ?? false,
     );
   }
 
@@ -175,6 +229,19 @@ class Product {
       'arrivalDate': arrivalDate,
       'createdAt': FieldValue.serverTimestamp(),
       'memo': memo,
+      'invoicerCorpNum': invoicerCorpNum,
+      'invoicerMgtKey': invoicerMgtKey,
+      'invoicerTaxRegID': invoicerTaxRegID,
+      'invoicerCorpName': invoicerCorpName,
+      'invoicerCEOName': invoicerCEOName,
+      'invoicerAddr': invoicerAddr,
+      'invoicerBizClass': invoicerBizClass,
+      'invoicerBizType': invoicerBizType,
+      'invoicerContactName': invoicerContactName,
+      'invoicerTEL': invoicerTEL,
+      'invoicerHP': invoicerHP,
+      'invoicerEmail': invoicerEmail,
+      'invoicerSMSSendYN': invoicerSMSSendYN,
     };
   }
 }
