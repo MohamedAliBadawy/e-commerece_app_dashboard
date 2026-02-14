@@ -15,6 +15,19 @@ class DeliveryManager {
   String accountHolderInfoType;
   String accountHolderInfo;
   String uid;
+  final String invoicerCorpNum;
+  final String invoicerMgtKey;
+  final String invoicerTaxRegID;
+  final String invoicerCorpName;
+  final String invoicerCEOName;
+  final String invoicerAddr;
+  final String invoicerBizClass;
+  final String invoicerBizType;
+  final String invoicerContactName;
+  final String invoicerTEL;
+  final String invoicerHP;
+  final String invoicerEmail;
+  final bool invoicerSMSSendYN;
 
   DeliveryManager({
     required this.userId,
@@ -30,6 +43,19 @@ class DeliveryManager {
     required this.accountHolderInfo,
     required this.bankCodeStd,
     required this.uid,
+    this.invoicerCorpNum = '',
+    this.invoicerMgtKey = '',
+    this.invoicerTaxRegID = '',
+    this.invoicerCorpName = '',
+    this.invoicerCEOName = '',
+    this.invoicerAddr = '',
+    this.invoicerBizClass = '',
+    this.invoicerBizType = '',
+    this.invoicerContactName = '',
+    this.invoicerTEL = '',
+    this.invoicerHP = '',
+    this.invoicerEmail = '',
+    this.invoicerSMSSendYN = false,
   });
 
   Map<String, Object?> toDocument() {
@@ -47,6 +73,19 @@ class DeliveryManager {
       'accountHolderInfo': accountHolderInfo,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'uid': uid,
+      'invoicerCorpNum': invoicerCorpNum,
+      'invoicerMgtKey': invoicerMgtKey,
+      'invoicerTaxRegID': invoicerTaxRegID,
+      'invoicerCorpName': invoicerCorpName,
+      'invoicerCEOName': invoicerCEOName,
+      'invoicerAddr': invoicerAddr,
+      'invoicerBizClass': invoicerBizClass,
+      'invoicerBizType': invoicerBizType,
+      'invoicerContactName': invoicerContactName,
+      'invoicerTEL': invoicerTEL,
+      'invoicerHP': invoicerHP,
+      'invoicerEmail': invoicerEmail,
+      'invoicerSMSSendYN': invoicerSMSSendYN,
     };
   }
 
@@ -65,6 +104,19 @@ class DeliveryManager {
       accountHolderInfo: doc['accountHolderInfo'] ?? '',
       createdAt: doc['createdAt'],
       uid: doc['uid'] ?? '',
+      invoicerCorpNum: doc['invoicerCorpNum'] ?? '',
+      invoicerMgtKey: doc['invoicerMgtKey'] ?? '',
+      invoicerTaxRegID: doc['invoicerTaxRegID'] ?? '',
+      invoicerCorpName: doc['invoicerCorpName'] ?? '',
+      invoicerCEOName: doc['invoicerCEOName'] ?? '',
+      invoicerAddr: doc['invoicerAddr'] ?? '',
+      invoicerBizClass: doc['invoicerBizClass'] ?? '',
+      invoicerBizType: doc['invoicerBizType'] ?? '',
+      invoicerContactName: doc['invoicerContactName'] ?? '',
+      invoicerTEL: doc['invoicerTEL'] ?? '',
+      invoicerHP: doc['invoicerHP'] ?? '',
+      invoicerEmail: doc['invoicerEmail'] ?? '',
+      invoicerSMSSendYN: doc['invoicerSMSSendYN'] ?? false,
     );
   }
 

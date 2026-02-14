@@ -393,6 +393,21 @@ class _DeliveryManagerManagementScreenState
     String password = '';
     final TextEditingController passwordController = TextEditingController();
     bool autoGeneratePassword = false;
+
+    String invoicerCorpNum = '';
+    String invoicerMgtKey = '';
+    String invoicerTaxRegID = '';
+    String invoicerCorpName = '';
+    String invoicerCEOName = '';
+    String invoicerAddr = '';
+    String invoicerBizClass = '';
+    String invoicerBizType = '';
+    String invoicerContactName = '';
+    String invoicerTEL = '';
+    String invoicerHP = '';
+    String invoicerEmail = '';
+    bool invoicerSMSSendYN = false;
+
     // Actually show the dialog
     showDialog(
       context: context,
@@ -658,6 +673,198 @@ class _DeliveryManagerManagementScreenState
                             ),
                           ],
                         ),
+                        SizedBox(height: 24),
+                        Text(
+                          '공급자 정보',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: '사업자등록번호 (10자리, - 제외)',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '사업자등록번호를 입력하세요';
+                                  }
+                                  if (value.length != 10) {
+                                    return '10자리 숫자를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCorpNum = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: '문서번호 (1-24자)',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '문서번호를 입력하세요';
+                                  }
+                                  if (value.length > 24) {
+                                    return '24자 이하로 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerMgtKey = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '회사명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '회사명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCorpName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '대표자명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '대표자명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCEOName = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          decoration: InputDecoration(labelText: '사업장 주소'),
+                          onSaved: (value) {
+                            invoicerAddr = value ?? '';
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '업종'),
+                                onSaved: (value) {
+                                  invoicerBizClass = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '업태'),
+                                onSaved: (value) {
+                                  invoicerBizType = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '담당자명'),
+                                onSaved: (value) {
+                                  invoicerContactName = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '전화'),
+                                onSaved: (value) {
+                                  invoicerTEL = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '휴대폰'),
+                                onSaved: (value) {
+                                  invoicerHP = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(labelText: '이메일'),
+                                keyboardType: TextInputType.emailAddress,
+                                onSaved: (value) {
+                                  invoicerEmail = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: '지점번호 (선택사항)',
+                                  hintText: '4자리 숫자',
+                                ),
+                                onSaved: (value) {
+                                  invoicerTaxRegID = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: invoicerSMSSendYN,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        invoicerSMSSendYN = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  Expanded(child: Text('SMS 발송 여부')),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -717,6 +924,19 @@ class _DeliveryManagerManagementScreenState
                           accountHolderInfo: accountHolderInfo,
                           preferences: preferences,
                           uid: userCredential.user!.uid,
+                          invoicerCorpNum: invoicerCorpNum,
+                          invoicerMgtKey: invoicerMgtKey,
+                          invoicerTaxRegID: invoicerTaxRegID,
+                          invoicerCorpName: invoicerCorpName,
+                          invoicerCEOName: invoicerCEOName,
+                          invoicerAddr: invoicerAddr,
+                          invoicerBizClass: invoicerBizClass,
+                          invoicerBizType: invoicerBizType,
+                          invoicerContactName: invoicerContactName,
+                          invoicerTEL: invoicerTEL,
+                          invoicerHP: invoicerHP,
+                          invoicerEmail: invoicerEmail,
+                          invoicerSMSSendYN: invoicerSMSSendYN,
                         );
 
                         // Save to Firestore
@@ -782,6 +1002,20 @@ class _DeliveryManagerManagementScreenState
     String accountHolderInfoType =
         deliveryManager.accountHolderInfoType; // default to individual
     String accountHolderInfo = deliveryManager.accountHolderInfo;
+
+    String invoicerCorpNum = deliveryManager.invoicerCorpNum;
+    String invoicerMgtKey = deliveryManager.invoicerMgtKey;
+    String invoicerTaxRegID = deliveryManager.invoicerTaxRegID;
+    String invoicerCorpName = deliveryManager.invoicerCorpName;
+    String invoicerCEOName = deliveryManager.invoicerCEOName;
+    String invoicerAddr = deliveryManager.invoicerAddr;
+    String invoicerBizClass = deliveryManager.invoicerBizClass;
+    String invoicerBizType = deliveryManager.invoicerBizType;
+    String invoicerContactName = deliveryManager.invoicerContactName;
+    String invoicerTEL = deliveryManager.invoicerTEL;
+    String invoicerHP = deliveryManager.invoicerHP;
+    String invoicerEmail = deliveryManager.invoicerEmail;
+    bool invoicerSMSSendYN = deliveryManager.invoicerSMSSendYN;
     // Actually show the dialog
     showDialog(
       context: context,
@@ -1006,6 +1240,220 @@ class _DeliveryManagerManagementScreenState
                             ),
                           ],
                         ),
+
+                        SizedBox(height: 24),
+                        Text(
+                          '공급자 정보',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerCorpNum,
+                                decoration: InputDecoration(
+                                  labelText: '사업자등록번호 (10자리, - 제외)',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '사업자등록번호를 입력하세요';
+                                  }
+                                  if (value.length != 10) {
+                                    return '10자리 숫자를 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCorpNum = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerMgtKey,
+
+                                decoration: InputDecoration(
+                                  labelText: '문서번호 (1-24자)',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '문서번호를 입력하세요';
+                                  }
+                                  if (value.length > 24) {
+                                    return '24자 이하로 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerMgtKey = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerCorpName,
+                                decoration: InputDecoration(labelText: '회사명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '회사명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCorpName = value!;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerCEOName,
+
+                                decoration: InputDecoration(labelText: '대표자명'),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return '대표자명을 입력하세요';
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  invoicerCEOName = value!;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: invoicerAddr,
+                          decoration: InputDecoration(labelText: '사업장 주소'),
+                          onSaved: (value) {
+                            invoicerAddr = value ?? '';
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerBizClass,
+
+                                decoration: InputDecoration(labelText: '업종'),
+                                onSaved: (value) {
+                                  invoicerBizClass = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerBizType,
+
+                                decoration: InputDecoration(labelText: '업태'),
+                                onSaved: (value) {
+                                  invoicerBizType = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerContactName,
+
+                                decoration: InputDecoration(labelText: '담당자명'),
+                                onSaved: (value) {
+                                  invoicerContactName = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerTEL,
+
+                                decoration: InputDecoration(labelText: '전화'),
+                                onSaved: (value) {
+                                  invoicerTEL = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerHP,
+
+                                decoration: InputDecoration(labelText: '휴대폰'),
+                                onSaved: (value) {
+                                  invoicerHP = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerEmail,
+
+                                decoration: InputDecoration(labelText: '이메일'),
+                                keyboardType: TextInputType.emailAddress,
+                                onSaved: (value) {
+                                  invoicerEmail = value ?? '';
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: invoicerTaxRegID,
+
+                                decoration: InputDecoration(
+                                  labelText: '지점번호 (선택사항)',
+                                  hintText: '4자리 숫자',
+                                ),
+                                onSaved: (value) {
+                                  invoicerTaxRegID = value ?? '';
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: invoicerSMSSendYN,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        invoicerSMSSendYN = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  Expanded(child: Text('SMS 발송 여부')),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -1056,6 +1504,19 @@ class _DeliveryManagerManagementScreenState
                               accountHolderInfo: accountHolderInfo,
                               preferences: preferences,
                               uid: uid,
+                              invoicerCorpNum: invoicerCorpNum,
+                              invoicerMgtKey: invoicerMgtKey,
+                              invoicerTaxRegID: invoicerTaxRegID,
+                              invoicerCorpName: invoicerCorpName,
+                              invoicerCEOName: invoicerCEOName,
+                              invoicerAddr: invoicerAddr,
+                              invoicerBizClass: invoicerBizClass,
+                              invoicerBizType: invoicerBizType,
+                              invoicerContactName: invoicerContactName,
+                              invoicerTEL: invoicerTEL,
+                              invoicerHP: invoicerHP,
+                              invoicerEmail: invoicerEmail,
+                              invoicerSMSSendYN: invoicerSMSSendYN,
                             );
 
                         // Update in Firestore
