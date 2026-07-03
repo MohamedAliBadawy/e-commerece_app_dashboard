@@ -99,7 +99,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               .doc(order.userId)
               .get();
       final user =
-          userSnapshot.exists
+          (userSnapshot.exists && userSnapshot.data() != null)
               ? User.fromDocument(userSnapshot.data() as Map<String, dynamic>)
               : null;
 
@@ -109,7 +109,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               .doc(order.productId)
               .get();
       final product =
-          productSnapshot.exists
+          (productSnapshot.exists && productSnapshot.data() != null)
               ? Product.fromMap(productSnapshot.data() as Map<String, dynamic>)
               : null;
 
@@ -269,7 +269,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ? 'Order refunded successfully'
                 : 'Order canceled successfully',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.black,
         ),
       );
     } catch (e) {
@@ -756,14 +756,15 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         final List<DeliveryManager> deliveryManagerNames =
             deliveryManagers
                 .map(
-                  (doc) => DeliveryManager.fromDocument(
-                    (doc as DocumentSnapshot).data() as Map<String, dynamic>,
-                  ),
+                  (doc) {
+                    final data = (doc as DocumentSnapshot).data() as Map<String, dynamic>?;
+                    return DeliveryManager.fromDocument(data ?? {});
+                  },
                 )
                 .toList();
         if (order.deliveryManagerId.isNotEmpty &&
             selectedManagerNames[order.orderId] == null) {
-          selectedManagerNames[order.orderId] = order.deliveryManagerId!;
+          selectedManagerNames[order.orderId] = order.deliveryManagerId;
         }
         if ((snapshot.data![1] as DocumentSnapshot).data() == null) {
           isProductDeleted = true;
@@ -774,9 +775,28 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           );
         }
 
+        final currentManagerId = selectedManagerNames[order.orderId];
+        final currentManager = deliveryManagerNames.firstWhere(
+          (m) => m.userId == currentManagerId,
+          orElse: () => DeliveryManager(
+            userId: '',
+            email: '',
+            name: '없음',
+            phone: '',
+            preferences: '',
+            subId: '',
+            code: '',
+            accountNum: '',
+            accountHolderInfoType: '0',
+            accountHolderInfo: '',
+            bankCodeStd: '',
+            uid: '',
+          ),
+        );
+
         return Container(
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+            color: isSelected ? Colors.grey.shade100 : null,
             border: Border(
               bottom: BorderSide(color: Colors.black),
               top: BorderSide(color: Colors.black),
@@ -865,13 +885,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             ),
                           ),
                           child: Text(
-                            deliveryManagerNames
-                                .firstWhere(
-                                  (manager) =>
-                                      manager.userId ==
-                                      selectedManagerNames[order.orderId],
-                                )
-                                .name,
+                            currentManager.name,
                             style: TextStyle(fontSize: 16),
                           ),
                         )
@@ -902,13 +916,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             ),
                           ),
                           child: Text(
-                            deliveryManagerNames
-                                .firstWhere(
-                                  (manager) =>
-                                      manager.userId ==
-                                      selectedManagerNames[order.orderId],
-                                )
-                                .userId,
+                            currentManager.userId,
                             style: TextStyle(fontSize: 16),
                           ),
                         )
@@ -1033,9 +1041,14 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         final userSnapshot = snapshot.data![0];
         final orderSnapshot = snapshot.data![1];
 
-        if (userSnapshot == null || orderSnapshot == null) {
-          print('User or Order snapshot is null');
-          return Center(child: Text('데이터를 찾을 수 없습니다'));
+        if (userSnapshot == null ||
+            orderSnapshot == null ||
+            !userSnapshot.exists ||
+            !orderSnapshot.exists ||
+            userSnapshot.data() == null ||
+            orderSnapshot.data() == null) {
+          print('User or Order snapshot is null or non-existent');
+          return const Center(child: Text('데이터를 찾을 수 없습니다'));
         }
 
         final user = User.fromDocument(
@@ -1048,7 +1061,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
         return Container(
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+            color: isSelected ? Colors.grey.shade100 : null,
 
             border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
           ),
@@ -1072,12 +1085,14 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                 ConnectionState.waiting) {
                               return Center(child: CircularProgressIndicator());
                             }
-                            if (!snapshot.hasData || snapshot.data == null) {
-                              return Center(child: Text('상품 정보가 없습니다'));
+                            final docSnapshot = snapshot.data as DocumentSnapshot?;
+                            if (docSnapshot == null ||
+                                !docSnapshot.exists ||
+                                docSnapshot.data() == null) {
+                              return const Center(child: Text('상품 정보가 없습니다'));
                             }
                             final product = Product.fromMap(
-                              (snapshot.data as DocumentSnapshot).data()
-                                  as Map<String, dynamic>,
+                              docSnapshot.data() as Map<String, dynamic>,
                             );
                             print(product.imgUrl);
                             return Row(
@@ -1243,7 +1258,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
         return Container(
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+            color: isSelected ? Colors.grey.shade100 : null,
 
             border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
           ),

@@ -238,8 +238,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               child: Text('없음', style: TextStyle(color: Colors.grey)),
             );
           }
-          final doc = snapshot.data!.docs.first.data() as Map<String, dynamic>;
-          final phone = doc['phone'] ?? '';
+          final doc =
+              snapshot.data!.docs.first.data() as Map<String, dynamic>?;
+          final phone = doc?['phone'] ?? '';
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(phone, style: TextStyle(fontSize: 15)),

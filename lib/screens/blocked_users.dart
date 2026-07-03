@@ -117,22 +117,32 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                             if (!snapshot.hasData || snapshot.data == null) {
                               return Center(child: Text('차단된 사용자가 없습니다'));
                             }
-                            final blockedUser = snapshot.data![0].data()!;
-                            final blockingUser = snapshot.data![1].data()!;
+                            final blockedUserDoc = snapshot.data![0];
+                            final blockingUserDoc = snapshot.data![1];
+                            if (!blockedUserDoc.exists ||
+                                !blockingUserDoc.exists ||
+                                blockedUserDoc.data() == null ||
+                                blockingUserDoc.data() == null) {
+                              return const SizedBox.shrink();
+                            }
+                            final blockedUser =
+                                blockedUserDoc.data() as Map<String, dynamic>;
+                            final blockingUser =
+                                blockingUserDoc.data() as Map<String, dynamic>;
                             if (_searchQuery.isNotEmpty &&
-                                !(blockedUser['name']
+                                !( (blockedUser['name'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    blockedUser['userId']
+                                    (blockedUser['userId'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    blockingUser['name']
+                                    (blockingUser['name'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    blockingUser['userId']
+                                    (blockingUser['userId'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery))) {
@@ -163,19 +173,37 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                                         width: 56,
                                         height: 55,
                                         decoration: ShapeDecoration(
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                              blockedUser['url'],
-                                            ),
-                                            fit: BoxFit.cover,
-                                          ),
+                                          image:
+                                              blockedUser['url'] != null &&
+                                                      blockedUser['url']
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? DecorationImage(
+                                                    image: NetworkImage(
+                                                      blockedUser['url']
+                                                          .toString(),
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                  : null,
                                           shape: OvalBorder(),
+                                          color: Colors.grey.shade300,
                                         ),
+                                        child:
+                                            blockedUser['url'] == null ||
+                                                    blockedUser['url']
+                                                        .toString()
+                                                        .isEmpty
+                                                ? Icon(
+                                                  Icons.person,
+                                                  color: Colors.grey,
+                                                )
+                                                : null,
                                       ),
                                       subtitle: Text(
-                                        '${blockedUser['userId']}',
+                                        '${blockedUser['userId'] ?? ''}',
                                       ),
-                                      title: Text('${blockedUser['name']}'),
+                                      title: Text('${blockedUser['name'] ?? ''}'),
                                     ),
                                   ),
                                   Expanded(child: Text('Blocked by')),
@@ -185,19 +213,37 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                                         width: 56,
                                         height: 55,
                                         decoration: ShapeDecoration(
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                              blockingUser['url'],
-                                            ),
-                                            fit: BoxFit.cover,
-                                          ),
+                                          image:
+                                              blockingUser['url'] != null &&
+                                                      blockingUser['url']
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? DecorationImage(
+                                                    image: NetworkImage(
+                                                      blockingUser['url']
+                                                          .toString(),
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                  : null,
                                           shape: OvalBorder(),
+                                          color: Colors.grey.shade300,
                                         ),
+                                        child:
+                                            blockingUser['url'] == null ||
+                                                    blockingUser['url']
+                                                        .toString()
+                                                        .isEmpty
+                                                ? Icon(
+                                                  Icons.person,
+                                                  color: Colors.grey,
+                                                )
+                                                : null,
                                       ),
                                       subtitle: Text(
-                                        '${blockingUser['userId']}',
+                                        '${blockingUser['userId'] ?? ''}',
                                       ),
-                                      title: Text('${blockingUser['name']}'),
+                                      title: Text('${blockingUser['name'] ?? ''}'),
                                     ),
                                   ),
                                 ],

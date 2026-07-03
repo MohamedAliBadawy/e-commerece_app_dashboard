@@ -42,14 +42,14 @@ class Post {
 
   static Post fromDocument(Map<String, dynamic> doc) {
     return Post(
-      postId: doc['postId'],
-      userId: doc['userId'],
-      text: doc['text'],
-      imgUrl: doc['imgUrl'],
+      postId: doc['postId'] ?? '',
+      userId: doc['userId'] ?? '',
+      text: doc['text'] ?? '',
+      imgUrl: doc['imgUrl'] ?? '',
       notInterestedBy: doc['notInterestedBy'] ?? [],
       createdAt: doc['createdAt'],
-      comments: doc['comments'],
-      likes: doc['likes'],
+      comments: doc['comments'] ?? 0,
+      likes: doc['likes'] ?? 0,
     );
   }
 

@@ -15,7 +15,10 @@ class PricePoint {
   }
 
   factory PricePoint.fromMap(Map<String, dynamic> map) {
-    return PricePoint(quantity: map['quantity'], price: map['price']);
+    return PricePoint(
+      quantity: map['quantity'] ?? 0,
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 }
 
@@ -109,19 +112,19 @@ class Product {
   }
 
   factory Product.fromMap(Map<String, dynamic> map) {
+    final rawPricePoints = map['pricePoints'] as List?;
+    final parsedPricePoints = rawPricePoints
+            ?.map((pp) => PricePoint.fromMap(pp as Map<String, dynamic>))
+            .toList() ??
+        [];
     return Product(
-      product_id: map['product_id'],
+      product_id: map['product_id'] ?? '',
       productName: map['productName'] ?? '',
       instructions: map['instructions'] ?? '',
       description: map['description'] ?? '',
       stock: map['stock'] ?? 0,
       supplyPrice: map['supplyPrice'] ?? 0,
-      price:
-          (map['pricePoints'] as List?)
-              ?.map((pp) => PricePoint.fromMap(pp))
-              .toList()[0]
-              .price ??
-          0,
+      price: parsedPricePoints.isNotEmpty ? parsedPricePoints[0].price : 0.0,
       baselineTime: map['baselineTime'] ?? 0,
       meridiem: map['meridiem'] ?? 'AM',
       imgUrl: map['imgUrl'],
@@ -129,15 +132,11 @@ class Product {
       sellerName: map['sellerName'] ?? '',
       category: map['category'] ?? '',
       categoryList: List<String>.from(map['categoryList'] ?? []),
-      pricePoints:
-          (map['pricePoints'] as List?)
-              ?.map((pp) => PricePoint.fromMap(pp))
-              .toList() ??
-          [],
+      pricePoints: parsedPricePoints,
       freeShipping: map['freeShipping'] ?? false,
       deliveryManagerId: map['deliveryManagerId'] ?? '',
       deliveryPrice: map['deliveryPrice'] ?? 0,
-      marginRate: map['marginRate'] ?? 0,
+      marginRate: (map['marginRate'] as num?)?.toDouble() ?? 0.0,
       shippingFee: map['shippingFee'] ?? 0,
       address: map['address'],
       /*       estimatedSettlement: map['estimatedSettlement'] ?? 0,

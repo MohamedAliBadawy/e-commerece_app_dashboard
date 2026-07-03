@@ -27,8 +27,9 @@ class _DirectChatsScreenState extends State<DirectChatsScreen> {
 
     final doc =
         await FirebaseFirestore.instance.collection('users').doc(otherId).get();
-    if (!doc.exists) return null;
-    return MyUser.fromDocument(doc.data()!);
+    final data = doc.data();
+    if (data == null) return null;
+    return MyUser.fromDocument(data);
   }
 
   void toggleSearchMode() {

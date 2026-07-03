@@ -200,7 +200,7 @@ class _DeliveryManagerManagementScreenState
                 style: TextButton.styleFrom(
                   foregroundColor:
                       _selectedDeliveryManagers.length == 1
-                          ? Colors.blue
+                          ? Colors.black
                           : Colors.grey,
                 ),
               ),
@@ -278,11 +278,10 @@ class _DeliveryManagerManagementScreenState
                             child: ListView.builder(
                               itemCount: deliveryManagers.length,
                               itemBuilder: (context, index) {
+                                final managerData =
+                                    deliveryManagers[index].data() as Map<String, dynamic>?;
                                 final deliveryManager =
-                                    DeliveryManager.fromDocument(
-                                      deliveryManagers[index].data()
-                                          as Map<String, dynamic>,
-                                    );
+                                    DeliveryManager.fromDocument(managerData ?? {});
                                 return _buildDeliveryManagerRow(
                                   deliveryManager,
                                 );
@@ -319,7 +318,7 @@ class _DeliveryManagerManagementScreenState
 
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+        color: isSelected ? Colors.grey.shade100 : null,
 
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),

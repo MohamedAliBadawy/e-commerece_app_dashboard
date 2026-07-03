@@ -278,7 +278,7 @@ class _AdminPageState extends State<AdminPage> {
       child: Column(
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
+            decoration: BoxDecoration(color: Colors.black),
             child: Center(
               child: Text(
                 '관리자 메뉴',

@@ -70,13 +70,21 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _checkBlockState() async {
-    final chatRoomDoc =
-        await FirebaseFirestore.instance
-            .collection('chatRooms')
-            .doc(widget.chatRoomId)
-            .get();
-
-    ChatRoomModel chatRoom = ChatRoomModel.fromMap(chatRoomDoc.data()!);
+    final chatRoomDoc = await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(widget.chatRoomId)
+        .get();
+    if (!chatRoomDoc.exists || chatRoomDoc.data() == null) {
+      setState(() {
+        _blocked = false;
+        _isBlocked = false;
+        _loadingBlockState = false;
+      });
+      return;
+    }
+    ChatRoomModel chatRoom = ChatRoomModel.fromMap(
+      chatRoomDoc.data() as Map<String, dynamic>,
+    );
     if (chatRoom.type != 'direct') {
       setState(() {
         _blocked = false;
@@ -557,13 +565,18 @@ class MessageBubble extends StatelessWidget {
                               backgroundImage: AssetImage('assets/avatar.png'),
                             );
                           }
+                          final userData =
+                              asyncSnapshot.data!.data()
+                                  as Map<String, dynamic>?;
+                          final userUrl = userData?['url']?.toString() ?? '';
                           return CircleAvatar(
                             radius: 20,
                             backgroundColor: Colors.grey[300],
-                            backgroundImage: NetworkImage(
-                              (asyncSnapshot.data!.data()!
-                                  as Map<String, dynamic>)['url'],
-                            ),
+                            backgroundImage:
+                                userUrl.isNotEmpty
+                                    ? NetworkImage(userUrl)
+                                    : const AssetImage('assets/avatar.png')
+                                        as ImageProvider,
                           );
                         },
                       ),

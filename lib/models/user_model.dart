@@ -42,10 +42,10 @@ class User {
 
   static User fromDocument(Map<String, dynamic> doc) {
     return User(
-      userId: doc['userId'],
-      email: doc['email'],
-      name: doc['name'],
-      url: doc['url'],
+      userId: doc['userId'] ?? '',
+      email: doc['email'] ?? '',
+      name: doc['name'] ?? '',
+      url: doc['url'] ?? '',
       blocked: doc['blocked'] ?? [],
       createdAt: doc['createdAt'],
       isSub: doc['isSub'] ?? false,

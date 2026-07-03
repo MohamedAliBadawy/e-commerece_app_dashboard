@@ -91,11 +91,11 @@ class DeliveryManager {
 
   static DeliveryManager fromDocument(Map<String, dynamic> doc) {
     return DeliveryManager(
-      userId: doc['userId'],
-      email: doc['email'],
-      name: doc['name'],
-      phone: doc['phone'],
-      preferences: doc['preferences'],
+      userId: doc['userId'] ?? '',
+      email: doc['email'] ?? '',
+      name: doc['name'] ?? '',
+      phone: doc['phone'] ?? '',
+      preferences: doc['preferences'] ?? '',
       subId: doc['subId'] ?? '',
       bankCodeStd: doc['bankCodeStd'] ?? '',
       code: doc['code'] ?? '',

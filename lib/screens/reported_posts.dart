@@ -298,28 +298,41 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                                 child: Text('No reported users found'),
                               );
                             }
-                            final reportedUser = snapshot.data![0].data()!;
-                            final reportingUser = snapshot.data![1].data()!;
-                            final post = Post.fromDocument(
-                              snapshot.data![2].data()!,
-                            );
+                            final reportedUserDoc = snapshot.data![0];
+                            final reportingUserDoc = snapshot.data![1];
+                            final postDoc = snapshot.data![2];
+                            if (!reportedUserDoc.exists ||
+                                !reportingUserDoc.exists ||
+                                !postDoc.exists ||
+                                reportedUserDoc.data() == null ||
+                                reportingUserDoc.data() == null ||
+                                postDoc.data() == null) {
+                              return const SizedBox.shrink();
+                            }
+                             final reportedUser =
+                                 reportedUserDoc.data() ?? {};
+                             final reportingUser =
+                                 reportingUserDoc.data() ?? {};
+                             final post = Post.fromDocument(
+                               postDoc.data() ?? {},
+                             );
                             final isSelected = _selectedPosts.any(
                               (p) => p.postId == post.postId,
                             );
                             if (_searchQuery.isNotEmpty &&
-                                !(reportedUser['name']
+                                !( (reportedUser['name'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    reportedUser['userId']
+                                    (reportedUser['userId'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    reportingUser['name']
+                                    (reportingUser['name'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
-                                    reportingUser['userId']
+                                    (reportingUser['userId'] ?? '')
                                         .toString()
                                         .toLowerCase()
                                         .contains(_searchQuery) ||
@@ -393,19 +406,37 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                                           width: 56,
                                           height: 55,
                                           decoration: ShapeDecoration(
-                                            image: DecorationImage(
-                                              image: NetworkImage(
-                                                reportedUser['url'],
-                                              ),
-                                              fit: BoxFit.cover,
-                                            ),
+                                            image:
+                                                reportedUser['url'] != null &&
+                                                        reportedUser['url']
+                                                            .toString()
+                                                            .isNotEmpty
+                                                    ? DecorationImage(
+                                                      image: NetworkImage(
+                                                        reportedUser['url']
+                                                            .toString(),
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                    : null,
                                             shape: OvalBorder(),
+                                            color: Colors.grey.shade300,
                                           ),
+                                          child:
+                                              reportedUser['url'] == null ||
+                                                      reportedUser['url']
+                                                          .toString()
+                                                          .isEmpty
+                                                  ? Icon(
+                                                    Icons.person,
+                                                    color: Colors.grey,
+                                                  )
+                                                  : null,
                                         ),
                                         subtitle: Text(
-                                          '${reportedUser['userId']}',
+                                          '${reportedUser['userId'] ?? ''}',
                                         ),
-                                        title: Text('${reportedUser['name']}'),
+                                        title: Text('${reportedUser['name'] ?? ''}'),
                                       ),
                                     ),
                                   ),
@@ -427,19 +458,37 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                                           width: 56,
                                           height: 55,
                                           decoration: ShapeDecoration(
-                                            image: DecorationImage(
-                                              image: NetworkImage(
-                                                reportingUser['url'],
-                                              ),
-                                              fit: BoxFit.cover,
-                                            ),
+                                            image:
+                                                reportingUser['url'] != null &&
+                                                        reportingUser['url']
+                                                            .toString()
+                                                            .isNotEmpty
+                                                    ? DecorationImage(
+                                                      image: NetworkImage(
+                                                        reportingUser['url']
+                                                            .toString(),
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                    : null,
                                             shape: OvalBorder(),
+                                            color: Colors.grey.shade300,
                                           ),
+                                          child:
+                                              reportingUser['url'] == null ||
+                                                      reportingUser['url']
+                                                          .toString()
+                                                          .isEmpty
+                                                  ? Icon(
+                                                    Icons.person,
+                                                    color: Colors.grey,
+                                                  )
+                                                  : null,
                                         ),
                                         subtitle: Text(
-                                          '${reportingUser['userId']}',
+                                          '${reportingUser['userId'] ?? ''}',
                                         ),
-                                        title: Text('${reportingUser['name']}'),
+                                        title: Text('${reportingUser['name'] ?? ''}'),
                                       ),
                                     ),
                                   ),

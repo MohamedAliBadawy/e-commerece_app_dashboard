@@ -185,7 +185,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      _selectedUsers.length == 1 ? Colors.blue : Colors.grey,
+                      _selectedUsers.length == 1 ? Colors.black : Colors.grey,
                 ),
               ),
               SizedBox(width: 16),
@@ -262,9 +262,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             child: ListView.builder(
                               itemCount: users.length,
                               itemBuilder: (context, index) {
-                                final user = User.fromDocument(
-                                  users[index].data() as Map<String, dynamic>,
-                                );
+                                final userData =
+                                    users[index].data() as Map<String, dynamic>?;
+                                final user = User.fromDocument(userData ?? {});
                                 return _buildUserRow(user);
                               },
                             ),
@@ -297,7 +297,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+        color: isSelected ? Colors.grey.shade100 : null,
 
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),

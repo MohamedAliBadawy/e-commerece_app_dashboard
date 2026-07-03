@@ -19,9 +19,10 @@ class ChatService {
       final messageRef = _firestore.collection('messages').doc(messageId);
       final messageDoc = await messageRef.get();
 
-      if (!messageDoc.exists) return false;
+      final data = messageDoc.data();
+      if (data == null) return false;
 
-      final message = MessageModel.fromMap(messageDoc.data()!);
+      final message = MessageModel.fromMap(data);
       final isLoved = message.lovedBy.contains(currentUserId);
 
       if (isLoved) {
@@ -55,7 +56,8 @@ class ChatService {
 
     // Get current user data
     final userDoc = await _firestore.collection('users').doc('Admin').get();
-    final user = MyUser.fromDocument(userDoc.data()!);
+    final data = userDoc.data();
+    final user = data != null ? MyUser.fromDocument(data) : MyUser.empty;
 
     final message = MessageModel(
       id: messageId,
@@ -82,7 +84,9 @@ class ChatService {
     // Update unread count for other participants
     final chatRoomDoc =
         await _firestore.collection('chatRooms').doc(chatRoomId).get();
-    final chatRoom = ChatRoomModel.fromMap(chatRoomDoc.data()!);
+    final roomData = chatRoomDoc.data();
+    if (roomData == null) return;
+    final chatRoom = ChatRoomModel.fromMap(roomData);
 
     final updatedUnreadCount = Map<String, int>.from(chatRoom.unreadCount);
     for (String participantId in chatRoom.participants) {

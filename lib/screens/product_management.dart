@@ -200,7 +200,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      _selectedProducts.length == 1 ? Colors.blue : Colors.grey,
+                      _selectedProducts.length == 1 ? Colors.black : Colors.grey,
                 ),
               ),
               SizedBox(width: 16),
@@ -279,10 +279,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             child: ListView.builder(
                               itemCount: products.length,
                               itemBuilder: (context, index) {
-                                final product = Product.fromMap(
-                                  products[index].data()
-                                      as Map<String, dynamic>,
-                                );
+                                final productData =
+                                    products[index].data() as Map<String, dynamic>?;
+                                final product = Product.fromMap(productData ?? {});
                                 return _buildProductRow(product);
                               },
                             ),
@@ -317,7 +316,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+        color: isSelected ? Colors.grey.shade100 : null,
 
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
@@ -442,7 +441,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     List<String?> imgUrls = [];
     List<PricePoint> pricePoints = [PricePoint(quantity: 1, price: 0)];
     String deliveryManagerId = '';
-    Map<String, dynamic> _address = {};
+    Map<String, dynamic>? _address;
     final TextEditingController _addressController = TextEditingController();
 
     DateTime? _selectedDate;
@@ -1134,13 +1133,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           onTap: searchAddress,
                           decoration: InputDecoration(
                             labelText: 'Administrative Region',
+                            suffixIcon:
+                                _addressController.text.isNotEmpty
+                                    ? IconButton(
+                                      icon: Icon(Icons.clear),
+                                      onPressed: () {
+                                        setDialogState(() {
+                                          _addressController.clear();
+                                          _address = null;
+                                        });
+                                      },
+                                    )
+                                    : null,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Administrative Region can not be empty';
-                            }
-                            return null;
-                          },
                         ),
                         SizedBox(height: 24),
                         TextFormField(
@@ -1436,7 +1441,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     int supplyPrice = product.supplyPrice ?? 0;
     double marginRate = product.marginRate ?? 0;
     int shippingFee = product.shippingFee ?? 0;
-    Map<String, dynamic> _address = product.address ?? {};
+    Map<String, dynamic>? _address = product.address;
     final TextEditingController _addressController = TextEditingController(
       text: product.address?['address_name'] ?? '',
     );
@@ -2138,13 +2143,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           onTap: searchAddress,
                           decoration: InputDecoration(
                             labelText: 'Administrative Region',
+                            suffixIcon:
+                                _addressController.text.isNotEmpty
+                                    ? IconButton(
+                                      icon: Icon(Icons.clear),
+                                      onPressed: () {
+                                        setDialogState(() {
+                                          _addressController.clear();
+                                          _address = null;
+                                        });
+                                      },
+                                    )
+                                    : null,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Administrative Region can not be empty';
-                            }
-                            return null;
-                          },
                         ),
                         SizedBox(height: 24),
                         TextFormField(

@@ -221,9 +221,9 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                             child: ListView.builder(
                               itemCount: posts.length,
                               itemBuilder: (context, index) {
-                                final post = Post.fromDocument(
-                                  posts[index].data() as Map<String, dynamic>,
-                                );
+                                final postData =
+                                    posts[index].data() as Map<String, dynamic>?;
+                                final post = Post.fromDocument(postData ?? {});
                                 final isSelected = _selectedPosts.any(
                                   (p) => p.postId == post.postId,
                                 );
@@ -299,8 +299,10 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                                                     .get(),
                                             builder: (context, snapshot) {
                                               if (!snapshot.hasData ||
-                                                  snapshot.data == null) {
-                                                return Center(
+                                                  snapshot.data == null ||
+                                                  !snapshot.data!.exists ||
+                                                  snapshot.data!.data() == null) {
+                                                return const Center(
                                                   child: Text('유저를 찾을 수 없습니다'),
                                                 );
                                               }

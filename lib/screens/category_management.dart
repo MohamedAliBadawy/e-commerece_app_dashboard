@@ -179,7 +179,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            backgroundColor: Colors.orange,
+                            backgroundColor: Colors.black,
                           ),
                         ),
                       ],
@@ -187,7 +187,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ] else ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-
                       children: [
                         ElevatedButton.icon(
                           icon: Icon(Icons.save),
@@ -198,7 +197,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.black,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -211,7 +210,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            backgroundColor: Colors.grey,
+                            backgroundColor: Colors.black54,
                           ),
                         ),
                       ],
@@ -266,7 +265,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: Colors.black,
                       ),
                     ),
                   ] else ...[
@@ -279,7 +278,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.black,
                       ),
                     ),
                     SizedBox(width: 8),
@@ -292,7 +291,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Colors.black54,
                       ),
                     ),
                   ],
@@ -315,7 +314,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   style: TextButton.styleFrom(
                     foregroundColor:
                         _selectedCategoryIds.length == 1
-                            ? Colors.blue
+                            ? Colors.black
                             : Colors.grey,
                   ),
                 ),
@@ -341,7 +340,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               child: Text(
                 '드래그하여 순서를 변경하세요',
                 style: TextStyle(
-                  color: Colors.orange,
+                  color: Colors.grey.shade700,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -426,7 +425,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+        color: isSelected ? Colors.grey.shade100 : null,
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
