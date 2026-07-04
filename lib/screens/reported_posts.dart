@@ -80,7 +80,7 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                     return AlertDialog(
                       content: Row(
                         children: [
-                          CircularProgressIndicator(),
+                          SizedBox.shrink(),
                           SizedBox(width: 16),
                           Text("게시글 삭제중..."),
                         ],

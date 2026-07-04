@@ -40,7 +40,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
+                    SizedBox.shrink(),
                     SizedBox(width: 16),
                     Text('Loading...'),
                   ],
@@ -230,7 +230,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Center(child: CircularProgressIndicator());
+        return Center(child: SizedBox.shrink());
       },
     );
 
@@ -497,7 +497,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 stream: getOrdersStream(_searchQuery),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return Center(child: SizedBox.shrink());
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -577,7 +577,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 stream: getRefundRequestsStream(_searchQuery),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return Center(child: SizedBox.shrink());
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -1031,7 +1031,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: SizedBox.shrink());
         }
         if (!snapshot.hasData || snapshot.data == null) {
           return Center(child: Text('배송 관리자가 없습니다'));
@@ -1083,7 +1083,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
+                              return Center(child: SizedBox.shrink());
                             }
                             final docSnapshot = snapshot.data as DocumentSnapshot?;
                             if (docSnapshot == null ||
@@ -1233,7 +1233,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: SizedBox.shrink());
         }
         if (!snapshot.hasData || snapshot.data == null) {
           return Center(child: Text('배송 관리자가 없습니다'));
@@ -1280,7 +1280,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
+                              return Center(child: SizedBox.shrink());
                             }
                             if (!snapshot.hasData || snapshot.data == null) {
                               return Center(child: Text('상품 정보가 없습니다'));

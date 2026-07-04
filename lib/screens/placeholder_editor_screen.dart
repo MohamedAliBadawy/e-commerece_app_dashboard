@@ -69,7 +69,7 @@ class _PlaceholderEditorScreenState extends State<PlaceholderEditorScreen> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: SizedBox.shrink());
           }
 
           if (!snapshot.hasData || !snapshot.data!.exists) {
@@ -130,7 +130,7 @@ class _PlaceholderEditorScreenState extends State<PlaceholderEditorScreen> {
               onPressed: _isSaving ? null : _savePlaceholders,
               child:
                   _isSaving
-                      ? const CircularProgressIndicator()
+                      ? const SizedBox.shrink()
                       : const Text('Save Changes'),
             ),
           ],

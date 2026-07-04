@@ -90,8 +90,11 @@ class DeliveryManager {
   }
 
   static DeliveryManager fromDocument(Map<String, dynamic> doc) {
+    final uidVal = doc['uid'] ?? '';
     return DeliveryManager(
-      userId: doc['userId'] ?? '',
+      userId: (doc['userId'] != null && (doc['userId'] as String).isNotEmpty)
+          ? doc['userId']
+          : uidVal,
       email: doc['email'] ?? '',
       name: doc['name'] ?? '',
       phone: doc['phone'] ?? '',

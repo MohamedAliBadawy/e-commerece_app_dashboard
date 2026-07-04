@@ -226,7 +226,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               child: SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: SizedBox.shrink(),
               ),
             );
           }

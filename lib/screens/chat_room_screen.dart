@@ -212,7 +212,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body:
           _loadingBlockState
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: SizedBox.shrink())
               : Column(
                 children: [
                   Expanded(
@@ -551,9 +551,7 @@ class MessageBubble extends StatelessWidget {
                               width: 35,
                               height: 35,
                               child: Center(
-                                child: CircularProgressIndicator(
-                                  color: ColorsManager.primary600,
-                                ),
+                                child: SizedBox.shrink(),
                               ),
                             );
                           }

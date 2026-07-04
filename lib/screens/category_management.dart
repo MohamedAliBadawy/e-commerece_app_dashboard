@@ -583,7 +583,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           return AlertDialog(
                             content: Row(
                               children: [
-                                CircularProgressIndicator(),
+                                SizedBox.shrink(),
                                 SizedBox(width: 16),
                                 Text("Updating category..."),
                               ],
@@ -668,7 +668,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     return AlertDialog(
                       content: Row(
                         children: [
-                          CircularProgressIndicator(),
+                          SizedBox.shrink(),
                           SizedBox(width: 16),
                           Text("Deleting categories..."),
                         ],

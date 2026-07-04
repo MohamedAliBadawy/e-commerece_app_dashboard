@@ -404,7 +404,7 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                     return AlertDialog(
                       content: Row(
                         children: [
-                          CircularProgressIndicator(),
+                          SizedBox.shrink(),
                           SizedBox(width: 16),
                           Text("게시글 삭제중..."),
                         ],

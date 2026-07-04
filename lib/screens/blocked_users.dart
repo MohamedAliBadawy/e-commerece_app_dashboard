@@ -42,7 +42,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   FirebaseFirestore.instance.collection('blocks').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: SizedBox.shrink());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('차단된 사용자가 없습니다'));
@@ -84,7 +84,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   FirebaseFirestore.instance.collection('blocks').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: SizedBox.shrink());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('차단된 사용자가 없습니다'));
@@ -112,7 +112,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
+                              return Center(child: SizedBox.shrink());
                             }
                             if (!snapshot.hasData || snapshot.data == null) {
                               return Center(child: Text('차단된 사용자가 없습니다'));

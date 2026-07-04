@@ -6,10 +6,10 @@ import '../models/product_model.dart';
 import '../models/product_edit_request_model.dart';
 
 class ProductEditRequestsScreen extends StatefulWidget {
-  const ProductEditRequestsScreen({Key? key}) : super(key: key);
+  const ProductEditRequestsScreen({super.key});
 
   @override
-  _ProductEditRequestsScreenState createState() =>
+  State<ProductEditRequestsScreen> createState() =>
       _ProductEditRequestsScreenState();
 }
 
@@ -44,7 +44,7 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
                 content: Container(
                   height: 100,
                   alignment: Alignment.center,
-                  child: const CircularProgressIndicator(color: Colors.black),
+                  child: const SizedBox.shrink(),
                 ),
               );
             }
@@ -323,17 +323,35 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
 
   Future<void> _acceptEditRequest(ProductEditRequestModel request) async {
     try {
-      final product = Product.fromEditRequest(request);
+      Product? existingProduct;
+      String productId = request.productId;
+
+      if (request.isNewProduct == true || productId.isEmpty) {
+        if (productId.isEmpty) {
+          productId = FirebaseFirestore.instance.collection('products').doc().id;
+        }
+      } else {
+        existingProduct = await _fetchCurrentProduct(productId);
+      }
+
+      final product = Product.fromEditRequest(
+        request,
+        existingProduct: existingProduct,
+        productId: productId,
+      );
 
       await FirebaseFirestore.instance
           .collection('products')
-          .doc(product.product_id)
+          .doc(productId)
           .set(product.toMap());
 
       await FirebaseFirestore.instance
           .collection('product_edit_requests')
           .doc(request.id)
-          .update({'status': 'approved'});
+          .update({
+        'status': 'approved',
+        'product_id': productId,
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

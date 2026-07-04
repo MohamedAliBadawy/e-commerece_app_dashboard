@@ -890,7 +890,7 @@ class _DeliveryManagerManagementScreenState
                           return AlertDialog(
                             content: Row(
                               children: [
-                                CircularProgressIndicator(),
+                                SizedBox.shrink(),
                                 SizedBox(width: 16),
                                 Text("저장중..."),
                               ],
@@ -988,18 +988,23 @@ class _DeliveryManagerManagementScreenState
     String phone = deliveryManager.phone;
 
     String uid = deliveryManager.uid;
-    String preferences = deliveryManager.preferences;
-    String bankCodeStd =
-        deliveryManager.bankCodeStd.isNotEmpty
-            ? deliveryManager.bankCodeStd
-            : banks.first['code']!;
+    String preferences =
+        (deliveryManager.preferences == '카톡' ||
+                deliveryManager.preferences == '이메일')
+            ? deliveryManager.preferences
+            : '카톡';
+    final hasValidBank = banks.any((bank) => bank['code'] == deliveryManager.bankCodeStd);
+    String bankCodeStd = hasValidBank ? deliveryManager.bankCodeStd : banks.first['code']!;
 
     String uniqueCode = deliveryManager.code;
 
     final uniqueCodeController = TextEditingController(text: uniqueCode);
     String accountNum = deliveryManager.accountNum;
     String accountHolderInfoType =
-        deliveryManager.accountHolderInfoType; // default to individual
+        (deliveryManager.accountHolderInfoType == '0' ||
+                deliveryManager.accountHolderInfoType == '6')
+            ? deliveryManager.accountHolderInfoType
+            : '0';
     String accountHolderInfo = deliveryManager.accountHolderInfo;
 
     String invoicerCorpNum = deliveryManager.invoicerCorpNum;
@@ -1479,7 +1484,7 @@ class _DeliveryManagerManagementScreenState
                           return AlertDialog(
                             content: Row(
                               children: [
-                                CircularProgressIndicator(),
+                                SizedBox.shrink(),
                                 SizedBox(width: 16),
                                 Text("저장중..."),
                               ],
@@ -1589,7 +1594,7 @@ class _DeliveryManagerManagementScreenState
                     return AlertDialog(
                       content: Row(
                         children: [
-                          CircularProgressIndicator(),
+                          SizedBox.shrink(),
                           SizedBox(width: 16),
                           Text("삭제중..."),
                         ],

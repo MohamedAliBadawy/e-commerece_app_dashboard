@@ -1,4 +1,4 @@
-// models/product_model.dart
+// ignore_for_file: non_constant_identifier_names
 
 import 'dart:core';
 
@@ -149,37 +149,48 @@ class Product {
     );
   }
 
-  factory Product.fromEditRequest(ProductEditRequestModel request) {
-    final parsedPricePoints = request.pricePoints
-        .map((pp) => PricePoint.fromMap(pp))
-        .toList();
+  factory Product.fromEditRequest(ProductEditRequestModel request, {Product? existingProduct, String? productId}) {
+    final double margin = existingProduct?.marginRate ?? 0.0;
+    final int supply = request.supplyPrice.toInt();
+    final int delivery = request.deliveryPrice.toInt();
+
+    // Calculate customer price points using the unified margin rate formula
+    final parsedPricePoints = request.pricePoints.map((pp) {
+      final qty = pp['quantity'] ?? 1;
+      final double calculatedPrice = ((qty * supply) + delivery) / (1 - (margin / 100));
+      return PricePoint(
+        quantity: qty,
+        price: calculatedPrice,
+      );
+    }).toList();
+
     return Product(
-      product_id: request.productId,
+      product_id: productId ?? request.productId,
       productName: request.productName,
-      sellerName: request.requestedBy ?? '',
+      sellerName: existingProduct?.sellerName ?? request.requestedBy ?? '',
       instructions: request.instructions,
       description: request.storageInfo,
       category: request.category,
-      categoryList: [request.category],
+      categoryList: existingProduct?.categoryList ?? [request.category],
       stock: request.stock,
       price: parsedPricePoints.isNotEmpty ? parsedPricePoints[0].price : 0.0,
-      supplyPrice: request.supplyPrice.toInt(),
-      deliveryPrice: request.deliveryPrice.toInt(),
-      marginRate: 0.0,
+      supplyPrice: supply,
+      deliveryPrice: delivery,
+      marginRate: margin,
       shippingFee: request.shippingFee.toInt(),
-      baselineTime: 0,
-      meridiem: 'AM',
+      baselineTime: existingProduct?.baselineTime ?? 0,
+      meridiem: existingProduct?.meridiem ?? 'AM',
       imgUrl: request.imgUrl,
       imgUrls: request.imgUrls,
       pricePoints: parsedPricePoints,
       freeShipping: !request.noFreeShipping,
-      deliveryManagerId: '',
+      deliveryManagerId: existingProduct?.deliveryManagerId ?? request.sellerUid ?? '',
       address: request.address,
-      arrivalDate: '',
-      createdAt: request.requestedAt is Timestamp
+      arrivalDate: existingProduct?.arrivalDate ?? '',
+      createdAt: existingProduct?.createdAt ?? (request.requestedAt is Timestamp
           ? request.requestedAt as Timestamp
-          : Timestamp.now(),
-      memo: '',
+          : Timestamp.now()),
+      memo: existingProduct?.memo ?? '',
     );
   }
 
@@ -209,7 +220,7 @@ class Product {
       'deliveryManagerId': deliveryManagerId,
       'address': address,
       'arrivalDate': arrivalDate,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'memo': memo,
     };
   }

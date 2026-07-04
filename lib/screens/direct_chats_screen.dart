@@ -187,7 +187,7 @@ class _DirectChatsScreenState extends State<DirectChatsScreen> {
         stream: chatService.getChatRoomsStream(),
         builder: (context, snapshot) {
           if (!snapshot.hasData)
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: SizedBox.shrink());
           // Show chats with type 'direct', missing type, or empty type
           final directChats =
               snapshot.data!

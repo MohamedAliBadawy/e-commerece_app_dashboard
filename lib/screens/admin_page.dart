@@ -14,8 +14,10 @@ import 'product_management.dart';
 import 'product_edit_requests_screen.dart';
 
 class AdminPage extends StatefulWidget {
+  const AdminPage({super.key});
+
   @override
-  _AdminPageState createState() => _AdminPageState();
+  State<AdminPage> createState() => _AdminPageState();
 }
 
 Widget buildMessagesIcon() {
@@ -104,8 +106,7 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 800;
-    final isTablet = MediaQuery.of(context).size.width < 1100;
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       UserManagementScreen(
         onSubPageRequested: (subPage) {
           setState(() {
@@ -165,7 +166,7 @@ class _AdminPageState extends State<AdminPage> {
                   ),
         ),
         drawer: _buildMobileDrawer(),
-        body: _currentSubPage ?? _pages[_selectedIndex],
+        body: _currentSubPage ?? pages[_selectedIndex],
       );
     } else {
       return ResponsiveScaffold(
@@ -282,7 +283,7 @@ class _AdminPageState extends State<AdminPage> {
               ),
             ),
             // Main content
-            Expanded(child: _currentSubPage ?? _pages[_selectedIndex]),
+            Expanded(child: _currentSubPage ?? pages[_selectedIndex]),
           ],
         ),
       );
@@ -351,6 +352,7 @@ class SidebarItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const SidebarItem({
+    super.key,
     required this.title,
     required this.isSelected,
     required this.onTap,

@@ -42,7 +42,7 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                   FirebaseFirestore.instance.collection('reports').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: SizedBox.shrink());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('No reported users found'));
@@ -84,7 +84,7 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                   FirebaseFirestore.instance.collection('reports').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: SizedBox.shrink());
                 }
                 if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: Text('No reported users found'));
@@ -113,7 +113,7 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
+                              return Center(child: SizedBox.shrink());
                             }
                             if (!snapshot.hasData || snapshot.data == null) {
                               return Center(
