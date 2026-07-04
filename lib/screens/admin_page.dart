@@ -11,6 +11,7 @@ import 'package:ecommerce_app_dashboard/screens/post_management.dart';
 import 'package:ecommerce_app_dashboard/screens/user_management.dart';
 import 'package:flutter/material.dart';
 import 'product_management.dart';
+import 'product_edit_requests_screen.dart';
 
 class AdminPage extends StatefulWidget {
   @override
@@ -86,6 +87,11 @@ class _AdminPageState extends State<AdminPage> {
     ),
     NavigationItem(title: '게시물 관리', icon: Icons.article, mobileTitle: '게시물'),
     NavigationItem(title: '상품 관리', icon: Icons.inventory, mobileTitle: '상품'),
+    NavigationItem(
+      title: '상품 수정 요청',
+      icon: Icons.playlist_add_check,
+      mobileTitle: '수정요청',
+    ),
     NavigationItem(title: '카테고리 관리', icon: Icons.category, mobileTitle: '카테고리'),
     NavigationItem(
       title: '플레이스홀더 편집',
@@ -117,6 +123,7 @@ class _AdminPageState extends State<AdminPage> {
         },
       ),
       ProductManagementScreen(),
+      ProductEditRequestsScreen(),
       CategoryManagementScreen(),
       PlaceholderEditorScreen(),
       PaymentHistoryScreen(),
@@ -236,7 +243,7 @@ class _AdminPageState extends State<AdminPage> {
                         }),
                   ),
                   SidebarItem(
-                    title: '카테고리 관리',
+                    title: '상품 수정 요청',
                     isSelected: _selectedIndex == 5,
                     onTap:
                         () => setState(() {
@@ -245,7 +252,7 @@ class _AdminPageState extends State<AdminPage> {
                         }),
                   ),
                   SidebarItem(
-                    title: '플레이스홀더 편집',
+                    title: '카테고리 관리',
                     isSelected: _selectedIndex == 6,
                     onTap:
                         () => setState(() {
@@ -254,11 +261,20 @@ class _AdminPageState extends State<AdminPage> {
                         }),
                   ),
                   SidebarItem(
-                    title: '결제 내역',
+                    title: '플레이스홀더 편집',
                     isSelected: _selectedIndex == 7,
                     onTap:
                         () => setState(() {
                           _selectedIndex = 7;
+                          _currentSubPage = null;
+                        }),
+                  ),
+                  SidebarItem(
+                    title: '결제 내역',
+                    isSelected: _selectedIndex == 8,
+                    onTap:
+                        () => setState(() {
+                          _selectedIndex = 8;
                           _currentSubPage = null;
                         }),
                   ),

@@ -3,6 +3,7 @@
 import 'dart:core';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'product_edit_request_model.dart';
 
 class PricePoint {
   int quantity;
@@ -113,7 +114,8 @@ class Product {
 
   factory Product.fromMap(Map<String, dynamic> map) {
     final rawPricePoints = map['pricePoints'] as List?;
-    final parsedPricePoints = rawPricePoints
+    final parsedPricePoints =
+        rawPricePoints
             ?.map((pp) => PricePoint.fromMap(pp as Map<String, dynamic>))
             .toList() ??
         [];
@@ -144,6 +146,40 @@ class Product {
       arrivalDate: map['arrivalDate'],
       createdAt: map['createdAt'],
       memo: map['memo'] ?? '',
+    );
+  }
+
+  factory Product.fromEditRequest(ProductEditRequestModel request) {
+    final parsedPricePoints = request.pricePoints
+        .map((pp) => PricePoint.fromMap(pp))
+        .toList();
+    return Product(
+      product_id: request.productId,
+      productName: request.productName,
+      sellerName: request.requestedBy ?? '',
+      instructions: request.instructions,
+      description: request.storageInfo,
+      category: request.category,
+      categoryList: [request.category],
+      stock: request.stock,
+      price: parsedPricePoints.isNotEmpty ? parsedPricePoints[0].price : 0.0,
+      supplyPrice: request.supplyPrice.toInt(),
+      deliveryPrice: request.deliveryPrice.toInt(),
+      marginRate: 0.0,
+      shippingFee: request.shippingFee.toInt(),
+      baselineTime: 0,
+      meridiem: 'AM',
+      imgUrl: request.imgUrl,
+      imgUrls: request.imgUrls,
+      pricePoints: parsedPricePoints,
+      freeShipping: !request.noFreeShipping,
+      deliveryManagerId: '',
+      address: request.address,
+      arrivalDate: '',
+      createdAt: request.requestedAt is Timestamp
+          ? request.requestedAt as Timestamp
+          : Timestamp.now(),
+      memo: '',
     );
   }
 

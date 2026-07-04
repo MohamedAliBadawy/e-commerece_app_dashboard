@@ -200,7 +200,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 child: Text('수정'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      _selectedProducts.length == 1 ? Colors.black : Colors.grey,
+                      _selectedProducts.length == 1
+                          ? Colors.black
+                          : Colors.grey,
                 ),
               ),
               SizedBox(width: 16),
@@ -280,8 +282,11 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               itemCount: products.length,
                               itemBuilder: (context, index) {
                                 final productData =
-                                    products[index].data() as Map<String, dynamic>?;
-                                final product = Product.fromMap(productData ?? {});
+                                    products[index].data()
+                                        as Map<String, dynamic>?;
+                                final product = Product.fromMap(
+                                  productData ?? {},
+                                );
                                 return _buildProductRow(product);
                               },
                             ),
