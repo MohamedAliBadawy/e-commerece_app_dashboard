@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({super.key});
@@ -124,11 +125,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         if (docs.isEmpty) {
                           return Center(child: Text('이체 내역이 없습니다'));
                         }
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                        return HoverScrollbar(
                           controller: _bodyScrollController,
-                          child: SizedBox(
-                            width: 1600,
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            controller: _bodyScrollController,
+                            child: SizedBox(
+                              width: 1600,
                             child: ListView.builder(
                               itemCount: docs.length,
                               itemBuilder: (context, index) {

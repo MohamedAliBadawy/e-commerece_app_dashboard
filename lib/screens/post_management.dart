@@ -5,6 +5,7 @@ import 'package:ecommerce_app_dashboard/models/post_model.dart';
 import 'package:ecommerce_app_dashboard/models/user_model.dart';
 import 'package:ecommerce_app_dashboard/screens/reported_posts.dart';
 import 'package:flutter/material.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class PostManagementScreen extends StatefulWidget {
   final void Function(Widget subPage)? onSubPageRequested;
@@ -213,12 +214,15 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                         if (posts.isEmpty) {
                           return Center(child: Text('게시글이 없습니다'));
                         }
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                        return HoverScrollbar(
                           controller: _bodyScrollController,
-                          child: SizedBox(
-                            width: 1600,
-                            child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            controller: _bodyScrollController,
+                            child: SizedBox(
+                              width: 1600,
+                              child: ListView.builder(
                               itemCount: posts.length,
                               itemBuilder: (context, index) {
                                 final postData =

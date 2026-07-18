@@ -10,6 +10,8 @@ import 'package:intl/intl.dart';
 import '../models/product_model.dart';
 import '../services/product_service.dart';
 import '../providers/product_providers.dart';
+import '../widgets/hover_scrollbar.dart';
+
 
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   static const separator = ',';
@@ -94,6 +96,9 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   List<String> _excludedEupmyeondong = [];
 
   final List<bool> _isUploadingImage = [false, false, false, false, false];
+
+  final ScrollController _sigunguScrollController = ScrollController();
+  final ScrollController _eupmyeondongScrollController = ScrollController();
 
   @override
   void initState() {
@@ -200,6 +205,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
 
   @override
   void dispose() {
+    _sigunguScrollController.dispose();
+    _eupmyeondongScrollController.dispose();
     _sellerNameController.dispose();
     super.dispose();
   }
@@ -501,6 +508,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     required List<String> items,
     required VoidCallback onAdd,
     required Function(int) onDelete,
+    required ScrollController controller,
     bool isExclude = false,
   }) {
     return Column(
@@ -512,27 +520,30 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
           decoration: BoxDecoration(
             border: Border.all(color: Colors.black, width: 1),
           ),
-          padding: const EdgeInsets.all(12),
-          child: SingleChildScrollView(
+          child: HoverScrollbar(
+            controller: controller,
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                ...items.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final val = entry.value;
-                  final parts = val.split(' ');
-                  final displayName =
-                      parts.length >= 2
-                          ? '${parts[parts.length - 2]} ${parts.last}'
-                          : val;
-                  return _buildBrutalistTag(
-                    label: displayName,
-                    onDelete: () => onDelete(index),
-                    isExclude: isExclude,
-                  );
-                }),
-                _buildBrutalistAddButton(onAdd),
-              ],
+            child: SingleChildScrollView(
+              controller: controller,
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    ...items.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final val = entry.value;
+                      final displayName = val;
+                      return _buildBrutalistTag(
+                        label: displayName,
+                        onDelete: () => onDelete(index),
+                        isExclude: isExclude,
+                      );
+                    }),
+                    _buildBrutalistAddButton(onAdd),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -878,6 +889,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                   _includedSigungu.removeAt(index);
                                 });
                               },
+                              controller: _sigunguScrollController,
                             ),
                             const SizedBox(height: 16),
                             _buildBrutalistSection(
@@ -890,6 +902,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                 });
                               },
                               isExclude: true,
+                              controller: _eupmyeondongScrollController,
                             ),
                             const SizedBox(height: 16),
                           ],

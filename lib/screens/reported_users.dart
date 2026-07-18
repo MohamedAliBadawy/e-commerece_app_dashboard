@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class ReportedUsersScreen extends StatefulWidget {
   const ReportedUsersScreen({super.key});
@@ -14,6 +15,21 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -90,14 +106,17 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                   return Center(child: Text('No reported users found'));
                 }
                 final reportedUsers = snapshot.data!.docs;
-                return SingleChildScrollView(
+                return HoverScrollbar(
+                  controller: _scrollController,
                   scrollDirection: Axis.horizontal,
-
-                  child: SizedBox(
-                    width: 1600, // match header width
-                    child: ListView.builder(
-                      itemCount: reportedUsers.length,
-                      itemBuilder: (context, index) {
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _scrollController,
+                    child: SizedBox(
+                      width: 1600, // match header width
+                      child: ListView.builder(
+                        itemCount: reportedUsers.length,
+                        itemBuilder: (context, index) {
                         final report = reportedUsers[index];
                         return FutureBuilder(
                           future: Future.wait([
@@ -255,7 +274,7 @@ class _ReportedUsersScreenState extends State<ReportedUsersScreen> {
                       },
                     ),
                   ),
-                );
+                ),);
               },
             ),
           ),

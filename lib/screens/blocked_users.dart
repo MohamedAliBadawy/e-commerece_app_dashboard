@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
   const BlockedUsersScreen({super.key});
@@ -14,6 +15,21 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -90,13 +106,17 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   return Center(child: Text('차단된 사용자가 없습니다'));
                 }
                 final blockedUsers = snapshot.data!.docs;
-                return SingleChildScrollView(
+                return HoverScrollbar(
+                  controller: _scrollController,
                   scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: 1600,
-                    child: ListView.builder(
-                      itemCount: blockedUsers.length,
-                      itemBuilder: (context, index) {
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _scrollController,
+                    child: SizedBox(
+                      width: 1600,
+                      child: ListView.builder(
+                        itemCount: blockedUsers.length,
+                        itemBuilder: (context, index) {
                         final block = blockedUsers[index];
                         return FutureBuilder(
                           future: Future.wait([

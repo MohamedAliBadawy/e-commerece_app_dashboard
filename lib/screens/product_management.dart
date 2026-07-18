@@ -6,6 +6,7 @@ import 'package:ecommerce_app_dashboard/services/product_service.dart';
 import 'package:ecommerce_app_dashboard/providers/product_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/hover_scrollbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -224,17 +225,21 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
                         if (products.isEmpty) {
                           return const Center(child: Text('No products found'));
                         }
-                        return SingleChildScrollView(
+                        return HoverScrollbar(
                           controller: _bodyScrollController,
                           scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: 1600,
-                            child: ListView.builder(
-                              itemCount: products.length,
-                              itemBuilder: (context, index) {
-                                final product = products[index];
-                                return _buildProductRow(product);
-                              },
+                          child: SingleChildScrollView(
+                            controller: _bodyScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: 1600,
+                              child: ListView.builder(
+                                itemCount: products.length,
+                                itemBuilder: (context, index) {
+                                  final product = products[index];
+                                  return _buildProductRow(product);
+                                },
+                              ),
                             ),
                           ),
                         );

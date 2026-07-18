@@ -59,6 +59,22 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
             final isNew =
                 request.isNewProduct == true || currentProduct == null;
 
+            String formatRegions(String? method, Map<String, dynamic>? address) {
+              if (method != '지역배송') return '전국 배송';
+              if (address == null) return '지역 미지정';
+              final List<String> included = address['includedSigungu'] is List
+                  ? List<String>.from(address['includedSigungu'])
+                  : [];
+              final List<String> excluded = address['excludedEupmyeondong'] is List
+                  ? List<String>.from(address['excludedEupmyeondong'])
+                  : [];
+              String result = '허용: ${included.isEmpty ? '-' : included.join(', ')}';
+              if (excluded.isNotEmpty) {
+                result += '\n제외: ${excluded.join(', ')}';
+              }
+              return result;
+            }
+
             Widget buildComparisonRow(
               String fieldName,
               String currentValue,
@@ -277,6 +293,16 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
                         request.noFreeShipping
                             ? '조건부 무료 배송 (기준: \$${request.freeShippingThreshold})'
                             : '무료 배송',
+                      ),
+                      buildComparisonRow(
+                        '배송 방식',
+                        currentProduct?.shippingMethod ?? '택배배송',
+                        request.shippingMethod ?? '택배배송',
+                      ),
+                      buildComparisonRow(
+                        '배송 지역',
+                        formatRegions(currentProduct?.shippingMethod, currentProduct?.address),
+                        formatRegions(request.shippingMethod, request.address),
                       ),
                       buildImageComparisonRow(
                         '대표 이미지',

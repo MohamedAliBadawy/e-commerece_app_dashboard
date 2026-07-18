@@ -13,6 +13,7 @@ import 'package:ecommerce_app_dashboard/services/refund_service.dart';
 import 'package:excel/excel.dart' hide Border;
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
@@ -511,19 +512,23 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   if (orders.isEmpty) {
                     return Center(child: Text('주문이 없습니다'));
                   }
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  return HoverScrollbar(
                     controller: _bodyScrollController,
-                    child: SizedBox(
-                      width: 1600,
-                      child: ListView.builder(
-                        itemCount: orders.length,
-                        itemBuilder: (context, index) {
-                          final order = MyOrder.fromDocument(
-                            orders[index].data() as Map<String, dynamic>,
-                          );
-                          return _buildOrderRow(order);
-                        },
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: _bodyScrollController,
+                      child: SizedBox(
+                        width: 1600,
+                        child: ListView.builder(
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            final order = MyOrder.fromDocument(
+                              orders[index].data() as Map<String, dynamic>,
+                            );
+                            return _buildOrderRow(order);
+                          },
+                        ),
                       ),
                     ),
                   );
@@ -592,19 +597,22 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     return Center(child: Text('주문이 없습니다'));
                   }
                   print(orders.first.data());
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  return HoverScrollbar(
                     controller: _bodyScrollController,
-                    child: SizedBox(
-                      width: 1600,
-
-                      child: ListView.builder(
-                        itemCount: orders.length,
-                        itemBuilder: (context, index) {
-                          final data =
-                              orders[index].data() as Map<String, dynamic>;
-                          return _buildRefundRow(Refund.fromDocument(data));
-                        },
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: _bodyScrollController,
+                      child: SizedBox(
+                        width: 1600,
+                        child: ListView.builder(
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            final data =
+                                orders[index].data() as Map<String, dynamic>;
+                            return _buildRefundRow(Refund.fromDocument(data));
+                          },
+                        ),
                       ),
                     ),
                   );
@@ -668,19 +676,23 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   if (orders.isEmpty) {
                     return Center(child: Text('주문이 없습니다'));
                   }
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  return HoverScrollbar(
                     controller: _bodyScrollController,
-                    child: SizedBox(
-                      width: 1600,
-                      child: ListView.builder(
-                        itemCount: orders.length,
-                        itemBuilder: (context, index) {
-                          final order = MyOrder.fromDocument(
-                            orders[index].data() as Map<String, dynamic>,
-                          );
-                          return _buildOrderRow(order);
-                        },
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: _bodyScrollController,
+                      child: SizedBox(
+                        width: 1600,
+                        child: ListView.builder(
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            final order = MyOrder.fromDocument(
+                              orders[index].data() as Map<String, dynamic>,
+                            );
+                            return _buildOrderRow(order);
+                          },
+                        ),
                       ),
                     ),
                   );

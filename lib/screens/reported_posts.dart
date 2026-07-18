@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecommerce_app_dashboard/models/post_model.dart';
 import 'package:flutter/material.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class ReportedPostsScreen extends StatefulWidget {
   const ReportedPostsScreen({super.key});
@@ -268,13 +269,16 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                   return Center(child: Text('No reported users found'));
                 }
                 final reportedUsers = snapshot.data!.docs;
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                return HoverScrollbar(
                   controller: _bodyScrollController,
-                  child: SizedBox(
-                    width: 1600,
-                    child: ListView.builder(
-                      itemCount: reportedUsers.length,
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _bodyScrollController,
+                    child: SizedBox(
+                      width: 1600,
+                      child: ListView.builder(
+                        itemCount: reportedUsers.length,
                       itemBuilder: (context, index) {
                         final report = reportedUsers[index];
                         return FutureBuilder(
@@ -512,7 +516,7 @@ class _ReportedPostsScreenState extends State<ReportedPostsScreen> {
                       },
                     ),
                   ),
-                );
+                ),);
               },
             ),
           ),

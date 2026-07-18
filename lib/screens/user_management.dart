@@ -9,6 +9,7 @@ import 'package:ecommerce_app_dashboard/widgets/search_box.dart';
 import 'package:ecommerce_app_dashboard/widgets/sub_page_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/hover_scrollbar.dart';
 
 class UserPageState {
   final List<User> users;
@@ -449,11 +450,14 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                           return const Center(child: Text('사용자가 없습니다'));
                         }
 
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                        return HoverScrollbar(
                           controller: _bodyScrollController,
-                          child: SizedBox(
-                            width: 1600, // match header width
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            controller: _bodyScrollController,
+                            child: SizedBox(
+                              width: 1600, // match header width
                             child: ListView.builder(
                               controller: _verticalScrollController,
                               itemCount: users.length + (paginationState.hasMore ? 1 : 0),
@@ -479,7 +483,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                               },
                             ),
                           ),
-                        );
+                        ),);
                       },
                     ),
                   ),

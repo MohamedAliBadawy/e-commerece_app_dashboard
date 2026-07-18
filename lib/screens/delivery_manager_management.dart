@@ -8,6 +8,7 @@ import 'package:ecommerce_app_dashboard/services/delivery_manager_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/hover_scrollbar.dart';
 
 const List<Map<String, String>> banks = [
   {'name': 'KDB산업은행', 'code': '002'},
@@ -270,22 +271,26 @@ class _DeliveryManagerManagementScreenState
                         if (deliveryManagers.isEmpty) {
                           return Center(child: Text('배송 관리자가 없습니다'));
                         }
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                        return HoverScrollbar(
                           controller: _bodyScrollController,
-                          child: SizedBox(
-                            width: 1600,
-                            child: ListView.builder(
-                              itemCount: deliveryManagers.length,
-                              itemBuilder: (context, index) {
-                                final managerData =
-                                    deliveryManagers[index].data() as Map<String, dynamic>?;
-                                final deliveryManager =
-                                    DeliveryManager.fromDocument(managerData ?? {});
-                                return _buildDeliveryManagerRow(
-                                  deliveryManager,
-                                );
-                              },
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            controller: _bodyScrollController,
+                            child: SizedBox(
+                              width: 1600,
+                              child: ListView.builder(
+                                itemCount: deliveryManagers.length,
+                                itemBuilder: (context, index) {
+                                  final managerData =
+                                      deliveryManagers[index].data() as Map<String, dynamic>?;
+                                  final deliveryManager =
+                                      DeliveryManager.fromDocument(managerData ?? {});
+                                  return _buildDeliveryManagerRow(
+                                    deliveryManager,
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         );
