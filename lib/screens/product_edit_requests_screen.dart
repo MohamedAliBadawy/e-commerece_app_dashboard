@@ -4,9 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/product_model.dart';
 import '../models/product_edit_request_model.dart';
+import '../services/category_service.dart';
 
 class ProductEditRequestsScreen extends StatefulWidget {
-  const ProductEditRequestsScreen({super.key});
+  final bool isNewProductOnly;
+
+  const ProductEditRequestsScreen({
+    super.key,
+    required this.isNewProductOnly,
+  });
 
   @override
   State<ProductEditRequestsScreen> createState() =>
@@ -334,10 +340,22 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
         existingProduct = await _fetchCurrentProduct(productId);
       }
 
+      List<String>? categoryList;
+      try {
+        final categories = await CategoryService().getCategoriesOnce();
+        final match = categories.firstWhere(
+          (cat) => cat.name.trim() == request.category.trim(),
+        );
+        categoryList = [match.id];
+      } catch (_) {
+        // Fallback to name if matching category ID is not found
+      }
+
       final product = Product.fromEditRequest(
         request,
         existingProduct: existingProduct,
         productId: productId,
+        categoryList: categoryList,
       );
 
       await FirebaseFirestore.instance
@@ -449,25 +467,14 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
             flex: 1,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child:
-                  Text(request.requestedBy ?? request.sellerUid ?? 'Unknown'),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                request.isNewProduct == true ? '신규 등록' : '정보 수정',
-                style: TextStyle(
-                  color: request.isNewProduct == true
-                      ? Colors.blue.shade800
-                      : Colors.orange.shade800,
-                  fontWeight: FontWeight.w500,
-                ),
+                (request.sellerName != null && request.sellerName!.trim().isNotEmpty)
+                    ? request.sellerName!
+                    : (request.requestedBy ?? request.sellerUid ?? 'Unknown'),
               ),
             ),
           ),
+
           Expanded(
             flex: 1,
             child: Padding(
@@ -548,14 +555,16 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.isNewProductOnly ? '상품 등록 요청 관리' : '상품 수정 요청 관리';
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '상품 등록/수정 요청 관리',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Row(
@@ -622,16 +631,7 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
                             ),
                           ),
                         ),
-                        Expanded(
-                          flex: 1,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Text(
-                              '유형',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
+
                         Expanded(
                           flex: 1,
                           child: Padding(
@@ -693,6 +693,13 @@ class _ProductEditRequestsScreenState extends State<ProductEditRequestsScreen> {
                             doc.id,
                             doc.data() as Map<String, dynamic>,
                           );
+                        }).toList();
+
+                        // Filter based on whether it is a registration (isNewProduct == true)
+                        // or a modification (isNewProduct == false or null)
+                        requests = requests.where((r) {
+                          final isNew = r.isNewProduct == true;
+                          return isNew == widget.isNewProductOnly;
                         }).toList();
 
                         if (_statusFilter != 'all') {
