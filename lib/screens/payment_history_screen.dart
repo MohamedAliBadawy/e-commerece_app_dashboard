@@ -133,58 +133,61 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                             controller: _bodyScrollController,
                             child: SizedBox(
                               width: 1600,
-                            child: ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                final data =
-                                    docs[index].data() as Map<String, dynamic>;
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Colors.grey.shade200,
+                              child: ListView.builder(
+                                itemCount: docs.length,
+                                itemBuilder: (context, index) {
+                                  final data =
+                                      docs[index].data()
+                                          as Map<String, dynamic>;
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.grey.shade200,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      _buildCell(
-                                        formatDate(
-                                          data['api_tran_dtm'],
-                                          data['receivedAt'],
+                                    child: Row(
+                                      children: [
+                                        _buildCell(
+                                          formatDate(
+                                            data['api_tran_dtm'],
+                                            data['receivedAt'],
+                                          ),
+                                          2,
                                         ),
-                                        2,
-                                      ),
-                                      _buildCell(
-                                        data['account_holder_name'] ?? '',
-                                        2,
-                                      ),
-                                      _buildCell(data['bank_name'] ?? '', 2),
-                                      _buildCell(
-                                        data['account_num_masked'] ??
-                                            data['account_num'] ??
-                                            '',
-                                        2,
-                                      ),
-                                      _buildCell(
-                                        NumberFormat('#,###').format(
-                                          int.tryParse(
-                                                data['tran_amt']?.toString() ??
-                                                    '0',
-                                              ) ??
-                                              0,
+                                        _buildCell(
+                                          data['account_holder_name'] ?? '',
+                                          2,
                                         ),
-                                        1,
-                                      ),
-                                      _buildCell(data['result'] ?? '', 1),
-                                      _buildCell(data['message'] ?? '', 2),
-                                      _buildDeliveryManagerCell(
-                                        data['sub_id'] ?? '',
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                        _buildCell(data['bank_name'] ?? '', 2),
+                                        _buildCell(
+                                          data['account_num_masked'] ??
+                                              data['account_num'] ??
+                                              '',
+                                          2,
+                                        ),
+                                        _buildCell(
+                                          NumberFormat('#,###').format(
+                                            int.tryParse(
+                                                  data['tran_amt']
+                                                          ?.toString() ??
+                                                      '0',
+                                                ) ??
+                                                0,
+                                          ),
+                                          1,
+                                        ),
+                                        _buildCell(data['result'] ?? '', 1),
+                                        _buildCell(data['message'] ?? '', 2),
+                                        _buildDeliveryManagerCell(
+                                          data['sub_id'] ?? '',
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         );
@@ -227,11 +230,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Padding(
               padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: SizedBox.shrink(),
-              ),
+              child: SizedBox(width: 24, height: 24, child: SizedBox.shrink()),
             );
           }
           if (!snapshot.hasData ||
@@ -242,8 +241,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               child: Text('없음', style: TextStyle(color: Colors.grey)),
             );
           }
-          final doc =
-              snapshot.data!.docs.first.data() as Map<String, dynamic>?;
+          final doc = snapshot.data!.docs.first.data() as Map<String, dynamic>?;
           final phone = doc?['phone'] ?? '';
           return Padding(
             padding: const EdgeInsets.all(16.0),

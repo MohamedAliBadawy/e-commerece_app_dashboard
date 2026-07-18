@@ -117,161 +117,171 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                       child: ListView.builder(
                         itemCount: blockedUsers.length,
                         itemBuilder: (context, index) {
-                        final block = blockedUsers[index];
-                        return FutureBuilder(
-                          future: Future.wait([
-                            FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(block['blockedUserId'])
-                                .get(),
-                            FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(block['blockedBy'])
-                                .get(),
-                          ]),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(child: SizedBox.shrink());
-                            }
-                            if (!snapshot.hasData || snapshot.data == null) {
-                              return Center(child: Text('차단된 사용자가 없습니다'));
-                            }
-                            final blockedUserDoc = snapshot.data![0];
-                            final blockingUserDoc = snapshot.data![1];
-                            if (!blockedUserDoc.exists ||
-                                !blockingUserDoc.exists ||
-                                blockedUserDoc.data() == null ||
-                                blockingUserDoc.data() == null) {
-                              return const SizedBox.shrink();
-                            }
-                            final blockedUser =
-                                blockedUserDoc.data() as Map<String, dynamic>;
-                            final blockingUser =
-                                blockingUserDoc.data() as Map<String, dynamic>;
-                            if (_searchQuery.isNotEmpty &&
-                                !( (blockedUser['name'] ?? '')
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(_searchQuery) ||
-                                    (blockedUser['userId'] ?? '')
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(_searchQuery) ||
-                                    (blockingUser['name'] ?? '')
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(_searchQuery) ||
-                                    (blockingUser['userId'] ?? '')
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(_searchQuery))) {
-                              return SizedBox.shrink();
-                            }
-                            return Container(
-                              width: double.infinity,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(color: Colors.grey.shade300),
-                                  right: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  top: BorderSide(color: Colors.grey.shade300),
-                                  bottom: BorderSide(
-                                    color: Colors.grey.shade300,
+                          final block = blockedUsers[index];
+                          return FutureBuilder(
+                            future: Future.wait([
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(block['blockedUserId'])
+                                  .get(),
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(block['blockedBy'])
+                                  .get(),
+                            ]),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(child: SizedBox.shrink());
+                              }
+                              if (!snapshot.hasData || snapshot.data == null) {
+                                return Center(child: Text('차단된 사용자가 없습니다'));
+                              }
+                              final blockedUserDoc = snapshot.data![0];
+                              final blockingUserDoc = snapshot.data![1];
+                              if (!blockedUserDoc.exists ||
+                                  !blockingUserDoc.exists ||
+                                  blockedUserDoc.data() == null ||
+                                  blockingUserDoc.data() == null) {
+                                return const SizedBox.shrink();
+                              }
+                              final blockedUser =
+                                  blockedUserDoc.data() as Map<String, dynamic>;
+                              final blockingUser =
+                                  blockingUserDoc.data()
+                                      as Map<String, dynamic>;
+                              if (_searchQuery.isNotEmpty &&
+                                  !((blockedUser['name'] ?? '')
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(_searchQuery) ||
+                                      (blockedUser['userId'] ?? '')
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(_searchQuery) ||
+                                      (blockingUser['name'] ?? '')
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(_searchQuery) ||
+                                      (blockingUser['userId'] ?? '')
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(_searchQuery))) {
+                                return SizedBox.shrink();
+                              }
+                              return Container(
+                                width: double.infinity,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    right: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    top: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: ListTile(
-                                      leading: Container(
-                                        width: 56,
-                                        height: 55,
-                                        decoration: ShapeDecoration(
-                                          image:
-                                              blockedUser['url'] != null &&
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: ListTile(
+                                        leading: Container(
+                                          width: 56,
+                                          height: 55,
+                                          decoration: ShapeDecoration(
+                                            image:
+                                                blockedUser['url'] != null &&
+                                                        blockedUser['url']
+                                                            .toString()
+                                                            .isNotEmpty
+                                                    ? DecorationImage(
+                                                      image: NetworkImage(
+                                                        blockedUser['url']
+                                                            .toString(),
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                    : null,
+                                            shape: OvalBorder(),
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          child:
+                                              blockedUser['url'] == null ||
                                                       blockedUser['url']
                                                           .toString()
-                                                          .isNotEmpty
-                                                  ? DecorationImage(
-                                                    image: NetworkImage(
-                                                      blockedUser['url']
-                                                          .toString(),
-                                                    ),
-                                                    fit: BoxFit.cover,
+                                                          .isEmpty
+                                                  ? Icon(
+                                                    Icons.person,
+                                                    color: Colors.grey,
                                                   )
                                                   : null,
-                                          shape: OvalBorder(),
-                                          color: Colors.grey.shade300,
                                         ),
-                                        child:
-                                            blockedUser['url'] == null ||
-                                                    blockedUser['url']
-                                                        .toString()
-                                                        .isEmpty
-                                                ? Icon(
-                                                  Icons.person,
-                                                  color: Colors.grey,
-                                                )
-                                                : null,
+                                        subtitle: Text(
+                                          '${blockedUser['userId'] ?? ''}',
+                                        ),
+                                        title: Text(
+                                          '${blockedUser['name'] ?? ''}',
+                                        ),
                                       ),
-                                      subtitle: Text(
-                                        '${blockedUser['userId'] ?? ''}',
-                                      ),
-                                      title: Text('${blockedUser['name'] ?? ''}'),
                                     ),
-                                  ),
-                                  Expanded(child: Text('Blocked by')),
-                                  Expanded(
-                                    child: ListTile(
-                                      leading: Container(
-                                        width: 56,
-                                        height: 55,
-                                        decoration: ShapeDecoration(
-                                          image:
-                                              blockingUser['url'] != null &&
+                                    Expanded(child: Text('Blocked by')),
+                                    Expanded(
+                                      child: ListTile(
+                                        leading: Container(
+                                          width: 56,
+                                          height: 55,
+                                          decoration: ShapeDecoration(
+                                            image:
+                                                blockingUser['url'] != null &&
+                                                        blockingUser['url']
+                                                            .toString()
+                                                            .isNotEmpty
+                                                    ? DecorationImage(
+                                                      image: NetworkImage(
+                                                        blockingUser['url']
+                                                            .toString(),
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                    : null,
+                                            shape: OvalBorder(),
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          child:
+                                              blockingUser['url'] == null ||
                                                       blockingUser['url']
                                                           .toString()
-                                                          .isNotEmpty
-                                                  ? DecorationImage(
-                                                    image: NetworkImage(
-                                                      blockingUser['url']
-                                                          .toString(),
-                                                    ),
-                                                    fit: BoxFit.cover,
+                                                          .isEmpty
+                                                  ? Icon(
+                                                    Icons.person,
+                                                    color: Colors.grey,
                                                   )
                                                   : null,
-                                          shape: OvalBorder(),
-                                          color: Colors.grey.shade300,
                                         ),
-                                        child:
-                                            blockingUser['url'] == null ||
-                                                    blockingUser['url']
-                                                        .toString()
-                                                        .isEmpty
-                                                ? Icon(
-                                                  Icons.person,
-                                                  color: Colors.grey,
-                                                )
-                                                : null,
+                                        subtitle: Text(
+                                          '${blockingUser['userId'] ?? ''}',
+                                        ),
+                                        title: Text(
+                                          '${blockingUser['name'] ?? ''}',
+                                        ),
                                       ),
-                                      subtitle: Text(
-                                        '${blockingUser['userId'] ?? ''}',
-                                      ),
-                                      title: Text('${blockingUser['name'] ?? ''}'),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 );

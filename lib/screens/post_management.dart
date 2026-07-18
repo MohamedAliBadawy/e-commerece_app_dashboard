@@ -223,134 +223,143 @@ class _PostManagementScreenState extends State<PostManagementScreen> {
                             child: SizedBox(
                               width: 1600,
                               child: ListView.builder(
-                              itemCount: posts.length,
-                              itemBuilder: (context, index) {
-                                final postData =
-                                    posts[index].data() as Map<String, dynamic>?;
-                                final post = Post.fromDocument(postData ?? {});
-                                final isSelected = _selectedPosts.any(
-                                  (p) => p.postId == post.postId,
-                                );
-                                return Container(
-                                  width: double.infinity,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      left: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      right: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      top: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      bottom: BorderSide(
-                                        color: Colors.grey.shade300,
+                                itemCount: posts.length,
+                                itemBuilder: (context, index) {
+                                  final postData =
+                                      posts[index].data()
+                                          as Map<String, dynamic>?;
+                                  final post = Post.fromDocument(
+                                    postData ?? {},
+                                  );
+                                  final isSelected = _selectedPosts.any(
+                                    (p) => p.postId == post.postId,
+                                  );
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        left: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        right: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        top: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        bottom: BorderSide(
+                                          color: Colors.grey.shade300,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    children: [
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                          ),
-                                          child:
-                                              post.imgUrl.isNotEmpty
-                                                  ? Container(
-                                                    width: 100,
-                                                    height: 55,
-                                                    decoration: ShapeDecoration(
-                                                      image: DecorationImage(
-                                                        image: NetworkImage(
-                                                          post.imgUrl,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
+                                      children: [
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                            ),
+                                            child:
+                                                post.imgUrl.isNotEmpty
+                                                    ? Container(
+                                                      width: 100,
+                                                      height: 55,
+                                                      decoration: ShapeDecoration(
+                                                        image: DecorationImage(
+                                                          image: NetworkImage(
+                                                            post.imgUrl,
+                                                          ),
+                                                          fit: BoxFit.cover,
                                                         ),
-                                                        fit: BoxFit.cover,
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                0,
+                                                              ),
+                                                        ),
                                                       ),
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              0,
-                                                            ),
-                                                      ),
+                                                    )
+                                                    : Text('이미지 없음'),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                            ),
+                                            child: Text(post.text),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                            ),
+                                            child: FutureBuilder(
+                                              future:
+                                                  FirebaseFirestore.instance
+                                                      .collection('users')
+                                                      .doc(post.userId)
+                                                      .get(),
+                                              builder: (context, snapshot) {
+                                                if (!snapshot.hasData ||
+                                                    snapshot.data == null ||
+                                                    !snapshot.data!.exists ||
+                                                    snapshot.data!.data() ==
+                                                        null) {
+                                                  return const Center(
+                                                    child: Text(
+                                                      '유저를 찾을 수 없습니다',
                                                     ),
-                                                  )
-                                                  : Text('이미지 없음'),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                          ),
-                                          child: Text(post.text),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                          ),
-                                          child: FutureBuilder(
-                                            future:
-                                                FirebaseFirestore.instance
-                                                    .collection('users')
-                                                    .doc(post.userId)
-                                                    .get(),
-                                            builder: (context, snapshot) {
-                                              if (!snapshot.hasData ||
-                                                  snapshot.data == null ||
-                                                  !snapshot.data!.exists ||
-                                                  snapshot.data!.data() == null) {
-                                                return const Center(
-                                                  child: Text('유저를 찾을 수 없습니다'),
-                                                );
-                                              }
-
-                                              final user = User.fromDocument(
-                                                snapshot.data!.data()
-                                                    as Map<String, dynamic>,
-                                              );
-                                              return Text(user.name);
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                          ),
-                                          child: Text(post.formattedCreatedAt),
-                                        ),
-                                      ),
-
-                                      Expanded(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Checkbox(
-                                              value: isSelected,
-                                              onChanged: (value) {
-                                                if (isSelected) {
-                                                  _deselectPost(post);
-                                                } else {
-                                                  _selectPost(post);
+                                                  );
                                                 }
+
+                                                final user = User.fromDocument(
+                                                  snapshot.data!.data()
+                                                      as Map<String, dynamic>,
+                                                );
+                                                return Text(user.name);
                                               },
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                            ),
+                                            child: Text(
+                                              post.formattedCreatedAt,
+                                            ),
+                                          ),
+                                        ),
+
+                                        Expanded(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Checkbox(
+                                                value: isSelected,
+                                                onChanged: (value) {
+                                                  if (isSelected) {
+                                                    _deselectPost(post);
+                                                  } else {
+                                                    _selectPost(post);
+                                                  }
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         );
